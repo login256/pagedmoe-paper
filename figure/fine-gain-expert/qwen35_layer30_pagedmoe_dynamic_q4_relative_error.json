@@ -1,0 +1,5154 @@
+{
+  "model_root": "/mnt/data/Qwen3.5-397B-A17B",
+  "storage_root": "/mnt/data/qwen35_397b_runtime_full_rust_fixed",
+  "ktensor_lib_dir": "/home/lyt/pagedmoe/src/target/release",
+  "gain_path": "/home/lyt/pagedmoe/subexp/results/qwen35_bit_gains_relact_l2sq_inf1_layers_000_060_experts_000_512_n10_seed_20260513_reprocessed_rel_l2_sq_pairavg_inf1/expert_bit_gains_f64.bin",
+  "layer_index": 30,
+  "hidden_states": {
+    "description": "deterministic synthetic BF16 hidden states sampled from N(0, 1)",
+    "base_seed": 20260602,
+    "seeds": [
+      20260602,
+      20260603,
+      20260604,
+      20260605,
+      20260606,
+      20260607,
+      20260608,
+      20260609,
+      20260610,
+      20260611,
+      20260612,
+      20260613,
+      20260614,
+      20260615,
+      20260616,
+      20260617,
+      20260618,
+      20260619,
+      20260620,
+      20260621
+    ],
+    "sample_count": 20,
+    "size": 4096
+  },
+  "router": {
+    "tensor": "model.language_model.layers.30.mlp.gate.weight",
+    "shard": "/mnt/data/Qwen3.5-397B-A17B/model.safetensors-00094-of-00094.safetensors",
+    "routing": "FP32 softmax over all 512 logits, top-10 selection, then renormalization of selected route weights to sum to one"
+  },
+  "reference": "FP32 weighted sum of top-10 outputs from original BF16 routed experts; each expert rounds the gated intermediate activation to BF16 before down_proj",
+  "reported_methods": [
+    "uniform_q4",
+    "oracle_q4",
+    "pagedmoe_dynamic"
+  ],
+  "oracle_q4_candidates": [
+    {
+      "strategy": "rank_aware_8665432222",
+      "label": "Rank-aware 8665432222",
+      "precision_by_rank": "8/6/6/5/4/3/2/2/2/2"
+    },
+    {
+      "strategy": "rank_aware_6655443322",
+      "label": "Rank-aware 6655443322",
+      "precision_by_rank": "6/6/5/5/4/4/3/3/2/2"
+    },
+    {
+      "strategy": "rank_aware_6555444322",
+      "label": "Rank-aware 6555444322",
+      "precision_by_rank": "6/5/5/5/4/4/4/3/2/2"
+    },
+    {
+      "strategy": "rank_aware_5555444422",
+      "label": "Rank-aware 5555444422",
+      "precision_by_rank": "5/5/5/5/4/4/4/4/2/2"
+    },
+    {
+      "strategy": "rank_aware_5554444333",
+      "label": "Rank-aware 5554444333",
+      "precision_by_rank": "5/5/5/4/4/4/4/3/3/3"
+    },
+    {
+      "strategy": "uniform_q4",
+      "label": "All 4-bit",
+      "precision_by_rank": "4/4/4/4/4/4/4/4/4/4"
+    }
+  ],
+  "dynamic_precision": {
+    "decider": "PagedMoE marginal-gain load/giveup algorithm mirrored from src/pagedmoe-core/src/precision.rs",
+    "compute_avg_bits": 4.0,
+    "max_load_bits": 10,
+    "cache_mode": "retained",
+    "cache_note": "retained mode starts from zero precision and preserves loaded per-expert precision across these samples without modeling cache eviction",
+    "gain": "route_weight^2 * expert_bit_gain[layer][expert][from_precision]"
+  },
+  "summary_csv": "/home/lyt/pagedmoe/paper/figure/fine-gain-expert/qwen35_layer30_pagedmoe_dynamic_q4_relative_error.csv",
+  "samples_csv": "/home/lyt/pagedmoe/paper/figure/fine-gain-expert/qwen35_layer30_pagedmoe_dynamic_q4_relative_error_samples.csv",
+  "figure_pdf": "/home/lyt/pagedmoe/paper/figure/fine-gain-expert/qwen35_layer30_pagedmoe_dynamic_q4_relative_error.pdf",
+  "figure_png": "/home/lyt/pagedmoe/paper/figure/fine-gain-expert/qwen35_layer30_pagedmoe_dynamic_q4_relative_error.png",
+  "samples": [
+    {
+      "sample_index": 0,
+      "seed": 20260602,
+      "router_logits_l2_norm": 67.47933959960938,
+      "top10_routed_weight_sum": 1.0,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 12,
+          "routed_weight": 0.41346579790115356,
+          "required_levels": [
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "elapsed_s": 0.047995805740356445
+        },
+        {
+          "rank": 2,
+          "expert_id": 254,
+          "routed_weight": 0.20177914202213287,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.026799678802490234
+        },
+        {
+          "rank": 3,
+          "expert_id": 404,
+          "routed_weight": 0.14053694903850555,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.026227474212646484
+        },
+        {
+          "rank": 4,
+          "expert_id": 501,
+          "routed_weight": 0.046701449900865555,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.020641803741455078
+        },
+        {
+          "rank": 5,
+          "expert_id": 310,
+          "routed_weight": 0.03937019035220146,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.019356727600097656
+        },
+        {
+          "rank": 6,
+          "expert_id": 13,
+          "routed_weight": 0.03698008507490158,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.019017696380615234
+        },
+        {
+          "rank": 7,
+          "expert_id": 461,
+          "routed_weight": 0.036947086453437805,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02296161651611328
+        },
+        {
+          "rank": 8,
+          "expert_id": 291,
+          "routed_weight": 0.03236465901136398,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022808551788330078
+        },
+        {
+          "rank": 9,
+          "expert_id": 74,
+          "routed_weight": 0.027313463389873505,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02280902862548828
+        },
+        {
+          "rank": 10,
+          "expert_id": 10,
+          "routed_weight": 0.024541214108467102,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02269721031188965
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dynamic_precisions": [
+        7,
+        6,
+        5,
+        4,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 0,
+          "seed": 20260602,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.06054848180222657,
+          "l2_error": 0.11559301614761353,
+          "max_absolute_error": 0.006159160286188126,
+          "mean_absolute_error": 0.001444461289793253,
+          "cosine_similarity": 0.9981689453125,
+          "reference_l2_norm": 1.909098505973816,
+          "output_l2_norm": 1.9004827737808228
+        },
+        {
+          "sample_index": 0,
+          "seed": 20260602,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.06142723029290815,
+          "l2_error": 0.11727063357830048,
+          "max_absolute_error": 0.00669839046895504,
+          "mean_absolute_error": 0.0014614013489335775,
+          "cosine_similarity": 0.9981124401092529,
+          "reference_l2_norm": 1.909098505973816,
+          "output_l2_norm": 1.9029784202575684
+        },
+        {
+          "sample_index": 0,
+          "seed": 20260602,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.0650248827965893,
+          "l2_error": 0.12413890659809113,
+          "max_absolute_error": 0.007419929839670658,
+          "mean_absolute_error": 0.0015506333438679576,
+          "cosine_similarity": 0.9978839159011841,
+          "reference_l2_norm": 1.909098505973816,
+          "output_l2_norm": 1.9035805463790894
+        },
+        {
+          "sample_index": 0,
+          "seed": 20260602,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.08993109540316106,
+          "l2_error": 0.1716873198747635,
+          "max_absolute_error": 0.010817928239703178,
+          "mean_absolute_error": 0.002133151749148965,
+          "cosine_similarity": 0.9959537982940674,
+          "reference_l2_norm": 1.909098505973816,
+          "output_l2_norm": 1.9078242778778076
+        },
+        {
+          "sample_index": 0,
+          "seed": 20260602,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.08637132221007988,
+          "l2_error": 0.16489136219024658,
+          "max_absolute_error": 0.011103269644081593,
+          "mean_absolute_error": 0.002051785122603178,
+          "cosine_similarity": 0.9962725639343262,
+          "reference_l2_norm": 1.909098505973816,
+          "output_l2_norm": 1.9102716445922852
+        },
+        {
+          "sample_index": 0,
+          "seed": 20260602,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.15879494056671384,
+          "l2_error": 0.30315518379211426,
+          "max_absolute_error": 0.016661129891872406,
+          "mean_absolute_error": 0.003798085730522871,
+          "cosine_similarity": 0.9875034689903259,
+          "reference_l2_norm": 1.909098505973816,
+          "output_l2_norm": 1.9223906993865967
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_8665432222",
+      "reference_output_l2_norm": 1.909098505973816,
+      "elapsed_s": 0.6016929149627686
+    },
+    {
+      "sample_index": 1,
+      "seed": 20260603,
+      "router_logits_l2_norm": 54.97304153442383,
+      "top10_routed_weight_sum": 0.9999999403953552,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 193,
+          "routed_weight": 0.21151740849018097,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.03046393394470215
+        },
+        {
+          "rank": 2,
+          "expert_id": 305,
+          "routed_weight": 0.16245891153812408,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024246692657470703
+        },
+        {
+          "rank": 3,
+          "expert_id": 244,
+          "routed_weight": 0.12866003811359406,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024340152740478516
+        },
+        {
+          "rank": 4,
+          "expert_id": 348,
+          "routed_weight": 0.11397126317024231,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.019240140914916992
+        },
+        {
+          "rank": 5,
+          "expert_id": 10,
+          "routed_weight": 0.08745791763067245,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.012320518493652344
+        },
+        {
+          "rank": 6,
+          "expert_id": 9,
+          "routed_weight": 0.06738093495368958,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.01769542694091797
+        },
+        {
+          "rank": 7,
+          "expert_id": 136,
+          "routed_weight": 0.06187156215310097,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021808862686157227
+        },
+        {
+          "rank": 8,
+          "expert_id": 43,
+          "routed_weight": 0.05791212245821953,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022340059280395508
+        },
+        {
+          "rank": 9,
+          "expert_id": 424,
+          "routed_weight": 0.055723194032907486,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022458314895629883
+        },
+        {
+          "rank": 10,
+          "expert_id": 12,
+          "routed_weight": 0.05304661765694618,
+          "required_levels": [
+            2,
+            3,
+            4,
+            7
+          ],
+          "elapsed_s": 0.026501178741455078
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        7
+      ],
+      "dynamic_precisions": [
+        5,
+        5,
+        4,
+        4,
+        4,
+        3,
+        2,
+        3,
+        3,
+        7
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 1,
+          "seed": 20260603,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.18562840132561428,
+          "l2_error": 0.2671966552734375,
+          "max_absolute_error": 0.02885805070400238,
+          "mean_absolute_error": 0.0033022991847246885,
+          "cosine_similarity": 0.9831743240356445,
+          "reference_l2_norm": 1.4394168853759766,
+          "output_l2_norm": 1.3676837682724
+        },
+        {
+          "sample_index": 1,
+          "seed": 20260603,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1520276501187938,
+          "l2_error": 0.2188311666250229,
+          "max_absolute_error": 0.01942451298236847,
+          "mean_absolute_error": 0.0027027768082916737,
+          "cosine_similarity": 0.9886391758918762,
+          "reference_l2_norm": 1.4394168853759766,
+          "output_l2_norm": 1.3902506828308105
+        },
+        {
+          "sample_index": 1,
+          "seed": 20260603,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.15718194831111387,
+          "l2_error": 0.22625035047531128,
+          "max_absolute_error": 0.02076667547225952,
+          "mean_absolute_error": 0.0027977037243545055,
+          "cosine_similarity": 0.9878937005996704,
+          "reference_l2_norm": 1.4394168853759766,
+          "output_l2_norm": 1.3855773210525513
+        },
+        {
+          "sample_index": 1,
+          "seed": 20260603,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.15083840771583304,
+          "l2_error": 0.21711935102939606,
+          "max_absolute_error": 0.01697923243045807,
+          "mean_absolute_error": 0.002678074175491929,
+          "cosine_similarity": 0.9888463616371155,
+          "reference_l2_norm": 1.4394168853759766,
+          "output_l2_norm": 1.3890278339385986
+        },
+        {
+          "sample_index": 1,
+          "seed": 20260603,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.12507009488596987,
+          "l2_error": 0.1800280064344406,
+          "max_absolute_error": 0.011247098445892334,
+          "mean_absolute_error": 0.0022332449443638325,
+          "cosine_similarity": 0.9922442436218262,
+          "reference_l2_norm": 1.4394168853759766,
+          "output_l2_norm": 1.4083495140075684
+        },
+        {
+          "sample_index": 1,
+          "seed": 20260603,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.14212287315697344,
+          "l2_error": 0.20457406342029572,
+          "max_absolute_error": 0.011963726952672005,
+          "mean_absolute_error": 0.002554879290983081,
+          "cosine_similarity": 0.9899815320968628,
+          "reference_l2_norm": 1.4394168853759766,
+          "output_l2_norm": 1.4016855955123901
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_5554444333",
+      "reference_output_l2_norm": 1.4394168853759766,
+      "elapsed_s": 0.5632035732269287
+    },
+    {
+      "sample_index": 2,
+      "seed": 20260604,
+      "router_logits_l2_norm": 78.76435852050781,
+      "top10_routed_weight_sum": 1.0,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 453,
+          "routed_weight": 0.5318755507469177,
+          "required_levels": [
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "elapsed_s": 0.03574728965759277
+        },
+        {
+          "rank": 2,
+          "expert_id": 57,
+          "routed_weight": 0.07815726846456528,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024272680282592773
+        },
+        {
+          "rank": 3,
+          "expert_id": 170,
+          "routed_weight": 0.05821075290441513,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.02423262596130371
+        },
+        {
+          "rank": 4,
+          "expert_id": 216,
+          "routed_weight": 0.05757533758878708,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.01922130584716797
+        },
+        {
+          "rank": 5,
+          "expert_id": 375,
+          "routed_weight": 0.05649350583553314,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.013376235961914062
+        },
+        {
+          "rank": 6,
+          "expert_id": 47,
+          "routed_weight": 0.05477987974882126,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.018234729766845703
+        },
+        {
+          "rank": 7,
+          "expert_id": 310,
+          "routed_weight": 0.04780550301074982,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02089667320251465
+        },
+        {
+          "rank": 8,
+          "expert_id": 413,
+          "routed_weight": 0.042329784482717514,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022339582443237305
+        },
+        {
+          "rank": 9,
+          "expert_id": 322,
+          "routed_weight": 0.03799412399530411,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022385597229003906
+        },
+        {
+          "rank": 10,
+          "expert_id": 92,
+          "routed_weight": 0.03477836400270462,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022441864013671875
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0
+      ],
+      "dynamic_precisions": [
+        7,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        3
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 2,
+          "seed": 20260604,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.08327492388951115,
+          "l2_error": 0.14459873735904694,
+          "max_absolute_error": 0.009045660495758057,
+          "mean_absolute_error": 0.0017937282100319862,
+          "cosine_similarity": 0.9965267181396484,
+          "reference_l2_norm": 1.736401915550232,
+          "output_l2_norm": 1.7310621738433838
+        },
+        {
+          "sample_index": 2,
+          "seed": 20260604,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.07559094830116309,
+          "l2_error": 0.13125626742839813,
+          "max_absolute_error": 0.007875019684433937,
+          "mean_absolute_error": 0.001643368974328041,
+          "cosine_similarity": 0.9971391558647156,
+          "reference_l2_norm": 1.736401915550232,
+          "output_l2_norm": 1.7330089807510376
+        },
+        {
+          "sample_index": 2,
+          "seed": 20260604,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.07415984970474039,
+          "l2_error": 0.12877130508422852,
+          "max_absolute_error": 0.007947418838739395,
+          "mean_absolute_error": 0.0016111750155687332,
+          "cosine_similarity": 0.9972468018531799,
+          "reference_l2_norm": 1.736401915550232,
+          "output_l2_norm": 1.7333753108978271
+        },
+        {
+          "sample_index": 2,
+          "seed": 20260604,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.10234063996314705,
+          "l2_error": 0.17770448327064514,
+          "max_absolute_error": 0.010281524620950222,
+          "mean_absolute_error": 0.0022213461343199015,
+          "cosine_similarity": 0.9947695136070251,
+          "reference_l2_norm": 1.736401915550232,
+          "output_l2_norm": 1.7382911443710327
+        },
+        {
+          "sample_index": 2,
+          "seed": 20260604,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.09513612012087057,
+          "l2_error": 0.1651945412158966,
+          "max_absolute_error": 0.010081731714308262,
+          "mean_absolute_error": 0.00206913985311985,
+          "cosine_similarity": 0.9954853653907776,
+          "reference_l2_norm": 1.736401915550232,
+          "output_l2_norm": 1.7398223876953125
+        },
+        {
+          "sample_index": 2,
+          "seed": 20260604,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.16691477307248836,
+          "l2_error": 0.28983113169670105,
+          "max_absolute_error": 0.017176147550344467,
+          "mean_absolute_error": 0.003586151637136936,
+          "cosine_similarity": 0.9860245585441589,
+          "reference_l2_norm": 1.736401915550232,
+          "output_l2_norm": 1.7299505472183228
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_6555444322",
+      "reference_output_l2_norm": 1.736401915550232,
+      "elapsed_s": 0.5642321109771729
+    },
+    {
+      "sample_index": 3,
+      "seed": 20260605,
+      "router_logits_l2_norm": 56.704986572265625,
+      "top10_routed_weight_sum": 1.0000001192092896,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 251,
+          "routed_weight": 0.21015115082263947,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.030797481536865234
+        },
+        {
+          "rank": 2,
+          "expert_id": 282,
+          "routed_weight": 0.13334624469280243,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024455547332763672
+        },
+        {
+          "rank": 3,
+          "expert_id": 244,
+          "routed_weight": 0.10548220574855804,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.023081064224243164
+        },
+        {
+          "rank": 4,
+          "expert_id": 479,
+          "routed_weight": 0.09247960150241852,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.01896190643310547
+        },
+        {
+          "rank": 5,
+          "expert_id": 17,
+          "routed_weight": 0.08865904062986374,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.013049125671386719
+        },
+        {
+          "rank": 6,
+          "expert_id": 162,
+          "routed_weight": 0.0864897072315216,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.017829179763793945
+        },
+        {
+          "rank": 7,
+          "expert_id": 114,
+          "routed_weight": 0.07828234136104584,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021706581115722656
+        },
+        {
+          "rank": 8,
+          "expert_id": 199,
+          "routed_weight": 0.07312435656785965,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021988630294799805
+        },
+        {
+          "rank": 9,
+          "expert_id": 451,
+          "routed_weight": 0.06748607009649277,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022222518920898438
+        },
+        {
+          "rank": 10,
+          "expert_id": 434,
+          "routed_weight": 0.06449925899505615,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022298574447631836
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dynamic_precisions": [
+        5,
+        5,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3,
+        4,
+        4
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 3,
+          "seed": 20260605,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.22717775864689263,
+          "l2_error": 0.28689512610435486,
+          "max_absolute_error": 0.016191698610782623,
+          "mean_absolute_error": 0.003593497211113572,
+          "cosine_similarity": 0.9740191698074341,
+          "reference_l2_norm": 1.2628662586212158,
+          "output_l2_norm": 1.2073570489883423
+        },
+        {
+          "sample_index": 3,
+          "seed": 20260605,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.18886007849955963,
+          "l2_error": 0.238505020737648,
+          "max_absolute_error": 0.014829697087407112,
+          "mean_absolute_error": 0.002969558583572507,
+          "cosine_similarity": 0.9821071624755859,
+          "reference_l2_norm": 1.2628662586212158,
+          "output_l2_norm": 1.222290277481079
+        },
+        {
+          "sample_index": 3,
+          "seed": 20260605,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1851190071636984,
+          "l2_error": 0.23378054797649384,
+          "max_absolute_error": 0.013199838809669018,
+          "mean_absolute_error": 0.0029081017710268497,
+          "cosine_similarity": 0.9828274846076965,
+          "reference_l2_norm": 1.2628662586212158,
+          "output_l2_norm": 1.2224897146224976
+        },
+        {
+          "sample_index": 3,
+          "seed": 20260605,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.185546254421264,
+          "l2_error": 0.23432010412216187,
+          "max_absolute_error": 0.013536542654037476,
+          "mean_absolute_error": 0.0029181824065744877,
+          "cosine_similarity": 0.9827916622161865,
+          "reference_l2_norm": 1.2628662586212158,
+          "output_l2_norm": 1.2190179824829102
+        },
+        {
+          "sample_index": 3,
+          "seed": 20260605,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13838601091781993,
+          "l2_error": 0.174763023853302,
+          "max_absolute_error": 0.01163224596530199,
+          "mean_absolute_error": 0.0021771746687591076,
+          "cosine_similarity": 0.990410566329956,
+          "reference_l2_norm": 1.2628662586212158,
+          "output_l2_norm": 1.2406829595565796
+        },
+        {
+          "sample_index": 3,
+          "seed": 20260605,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.14729455694852314,
+          "l2_error": 0.186013326048851,
+          "max_absolute_error": 0.011009263806045055,
+          "mean_absolute_error": 0.0023288559168577194,
+          "cosine_similarity": 0.9891147017478943,
+          "reference_l2_norm": 1.2628662586212158,
+          "output_l2_norm": 1.2407654523849487
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_5554444333",
+      "reference_output_l2_norm": 1.2628662586212158,
+      "elapsed_s": 0.557375431060791
+    },
+    {
+      "sample_index": 4,
+      "seed": 20260606,
+      "router_logits_l2_norm": 30.631086349487305,
+      "top10_routed_weight_sum": 1.0,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 493,
+          "routed_weight": 0.49802783131599426,
+          "required_levels": [
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "elapsed_s": 0.03595590591430664
+        },
+        {
+          "rank": 2,
+          "expert_id": 213,
+          "routed_weight": 0.09036091715097427,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.02417922019958496
+        },
+        {
+          "rank": 3,
+          "expert_id": 376,
+          "routed_weight": 0.08226417750120163,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024142980575561523
+        },
+        {
+          "rank": 4,
+          "expert_id": 116,
+          "routed_weight": 0.05912160128355026,
+          "required_levels": [
+            3,
+            4,
+            5
+          ],
+          "elapsed_s": 0.023679018020629883
+        },
+        {
+          "rank": 5,
+          "expert_id": 57,
+          "routed_weight": 0.056197330355644226,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.012206315994262695
+        },
+        {
+          "rank": 6,
+          "expert_id": 323,
+          "routed_weight": 0.04756758362054825,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.0177614688873291
+        },
+        {
+          "rank": 7,
+          "expert_id": 30,
+          "routed_weight": 0.04303409531712532,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021527767181396484
+        },
+        {
+          "rank": 8,
+          "expert_id": 170,
+          "routed_weight": 0.042155321687459946,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.020956039428710938
+        },
+        {
+          "rank": 9,
+          "expert_id": 479,
+          "routed_weight": 0.040847063064575195,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021120309829711914
+        },
+        {
+          "rank": 10,
+          "expert_id": 224,
+          "routed_weight": 0.04042401537299156,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02215743064880371
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        0,
+        0,
+        4,
+        0,
+        0,
+        4,
+        4,
+        0
+      ],
+      "dynamic_precisions": [
+        7,
+        4,
+        4,
+        3,
+        4,
+        4,
+        3,
+        4,
+        4,
+        3
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 4,
+          "seed": 20260606,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.09707265608037548,
+          "l2_error": 0.14795438945293427,
+          "max_absolute_error": 0.009843306615948677,
+          "mean_absolute_error": 0.0018478648271411657,
+          "cosine_similarity": 0.9952802062034607,
+          "reference_l2_norm": 1.5241613388061523,
+          "output_l2_norm": 1.513327956199646
+        },
+        {
+          "sample_index": 4,
+          "seed": 20260606,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.08917126207374676,
+          "l2_error": 0.13591139018535614,
+          "max_absolute_error": 0.007683371193706989,
+          "mean_absolute_error": 0.001696836668998003,
+          "cosine_similarity": 0.9960508346557617,
+          "reference_l2_norm": 1.5241613388061523,
+          "output_l2_norm": 1.5055075883865356
+        },
+        {
+          "sample_index": 4,
+          "seed": 20260606,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.08765923783583897,
+          "l2_error": 0.13360682129859924,
+          "max_absolute_error": 0.007440726738423109,
+          "mean_absolute_error": 0.0016585453413426876,
+          "cosine_similarity": 0.9961788654327393,
+          "reference_l2_norm": 1.5241613388061523,
+          "output_l2_norm": 1.5068833827972412
+        },
+        {
+          "sample_index": 4,
+          "seed": 20260606,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.10854122945578117,
+          "l2_error": 0.1654343456029892,
+          "max_absolute_error": 0.009666427969932556,
+          "mean_absolute_error": 0.002056058030575514,
+          "cosine_similarity": 0.9941153526306152,
+          "reference_l2_norm": 1.5241613388061523,
+          "output_l2_norm": 1.5047937631607056
+        },
+        {
+          "sample_index": 4,
+          "seed": 20260606,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.09617040024427496,
+          "l2_error": 0.14657920598983765,
+          "max_absolute_error": 0.008571168407797813,
+          "mean_absolute_error": 0.0018328186124563217,
+          "cosine_similarity": 0.9953807592391968,
+          "reference_l2_norm": 1.5241613388061523,
+          "output_l2_norm": 1.5085610151290894
+        },
+        {
+          "sample_index": 4,
+          "seed": 20260606,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1614007001005507,
+          "l2_error": 0.24600070714950562,
+          "max_absolute_error": 0.01449503842741251,
+          "mean_absolute_error": 0.0030410094186663628,
+          "cosine_similarity": 0.986889123916626,
+          "reference_l2_norm": 1.5241613388061523,
+          "output_l2_norm": 1.5045151710510254
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_6555444322",
+      "reference_output_l2_norm": 1.5241613388061523,
+      "elapsed_s": 0.5651671886444092
+    },
+    {
+      "sample_index": 5,
+      "seed": 20260607,
+      "router_logits_l2_norm": 51.92149353027344,
+      "top10_routed_weight_sum": 0.9999999403953552,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 37,
+          "routed_weight": 0.6277068257331848,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.030637741088867188
+        },
+        {
+          "rank": 2,
+          "expert_id": 227,
+          "routed_weight": 0.10846354812383652,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024494647979736328
+        },
+        {
+          "rank": 3,
+          "expert_id": 51,
+          "routed_weight": 0.053143445402383804,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024057865142822266
+        },
+        {
+          "rank": 4,
+          "expert_id": 479,
+          "routed_weight": 0.039901793003082275,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.01763176918029785
+        },
+        {
+          "rank": 5,
+          "expert_id": 463,
+          "routed_weight": 0.03747206926345825,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.012734413146972656
+        },
+        {
+          "rank": 6,
+          "expert_id": 400,
+          "routed_weight": 0.029896358028054237,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.017751216888427734
+        },
+        {
+          "rank": 7,
+          "expert_id": 357,
+          "routed_weight": 0.029145939275622368,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02172231674194336
+        },
+        {
+          "rank": 8,
+          "expert_id": 209,
+          "routed_weight": 0.027598945423960686,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02205634117126465
+        },
+        {
+          "rank": 9,
+          "expert_id": 396,
+          "routed_weight": 0.023859966546297073,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022289276123046875
+        },
+        {
+          "rank": 10,
+          "expert_id": 79,
+          "routed_weight": 0.022811071947216988,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02234959602355957
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        0,
+        4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dynamic_precisions": [
+        8,
+        5,
+        4,
+        4,
+        4,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 5,
+          "seed": 20260607,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.06012546066943196,
+          "l2_error": 0.11868724226951599,
+          "max_absolute_error": 0.011786505579948425,
+          "mean_absolute_error": 0.001473798998631537,
+          "cosine_similarity": 0.9982234239578247,
+          "reference_l2_norm": 1.9739930629730225,
+          "output_l2_norm": 1.9545538425445557
+        },
+        {
+          "sample_index": 5,
+          "seed": 20260607,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.058868433094064435,
+          "l2_error": 0.11620587855577469,
+          "max_absolute_error": 0.006949007511138916,
+          "mean_absolute_error": 0.0014439865481108427,
+          "cosine_similarity": 0.9983160495758057,
+          "reference_l2_norm": 1.9739930629730225,
+          "output_l2_norm": 1.9509025812149048
+        },
+        {
+          "sample_index": 5,
+          "seed": 20260607,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.059867573050972595,
+          "l2_error": 0.11817817389965057,
+          "max_absolute_error": 0.007512539625167847,
+          "mean_absolute_error": 0.0014737641904503107,
+          "cosine_similarity": 0.99825119972229,
+          "reference_l2_norm": 1.9739930629730225,
+          "output_l2_norm": 1.9518526792526245
+        },
+        {
+          "sample_index": 5,
+          "seed": 20260607,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.09133150812842328,
+          "l2_error": 0.18028776347637177,
+          "max_absolute_error": 0.0096378643065691,
+          "mean_absolute_error": 0.0022528597619384527,
+          "cosine_similarity": 0.9958657026290894,
+          "reference_l2_norm": 1.9739930629730225,
+          "output_l2_norm": 1.9471074342727661
+        },
+        {
+          "sample_index": 5,
+          "seed": 20260607,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.08749794825235789,
+          "l2_error": 0.17272034287452698,
+          "max_absolute_error": 0.009083852171897888,
+          "mean_absolute_error": 0.002151703229174018,
+          "cosine_similarity": 0.9961981773376465,
+          "reference_l2_norm": 1.9739930629730225,
+          "output_l2_norm": 1.9503710269927979
+        },
+        {
+          "sample_index": 5,
+          "seed": 20260607,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.162324203423698,
+          "l2_error": 0.3204268515110016,
+          "max_absolute_error": 0.019378362223505974,
+          "mean_absolute_error": 0.003996550105512142,
+          "cosine_similarity": 0.9868003129959106,
+          "reference_l2_norm": 1.9739930629730225,
+          "output_l2_norm": 1.925968050956726
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_6655443322",
+      "reference_output_l2_norm": 1.9739930629730225,
+      "elapsed_s": 0.55806565284729
+    },
+    {
+      "sample_index": 6,
+      "seed": 20260608,
+      "router_logits_l2_norm": 69.31039428710938,
+      "top10_routed_weight_sum": 1.0000001192092896,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 474,
+          "routed_weight": 0.17703849077224731,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.030590057373046875
+        },
+        {
+          "rank": 2,
+          "expert_id": 246,
+          "routed_weight": 0.14063619077205658,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024512290954589844
+        },
+        {
+          "rank": 3,
+          "expert_id": 498,
+          "routed_weight": 0.12166093289852142,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024338483810424805
+        },
+        {
+          "rank": 4,
+          "expert_id": 2,
+          "routed_weight": 0.1168239489197731,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.01904463768005371
+        },
+        {
+          "rank": 5,
+          "expert_id": 188,
+          "routed_weight": 0.10157345235347748,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.013388395309448242
+        },
+        {
+          "rank": 6,
+          "expert_id": 244,
+          "routed_weight": 0.07882440090179443,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.016814231872558594
+        },
+        {
+          "rank": 7,
+          "expert_id": 294,
+          "routed_weight": 0.07608853280544281,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021666288375854492
+        },
+        {
+          "rank": 8,
+          "expert_id": 460,
+          "routed_weight": 0.07300052791833878,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02228546142578125
+        },
+        {
+          "rank": 9,
+          "expert_id": 295,
+          "routed_weight": 0.06332897394895554,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022272348403930664
+        },
+        {
+          "rank": 10,
+          "expert_id": 45,
+          "routed_weight": 0.051024630665779114,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02253890037536621
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        4,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dynamic_precisions": [
+        5,
+        5,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        3
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 6,
+          "seed": 20260608,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.24848599051143275,
+          "l2_error": 0.285592645406723,
+          "max_absolute_error": 0.016158252954483032,
+          "mean_absolute_error": 0.003587314859032631,
+          "cosine_similarity": 0.9686964750289917,
+          "reference_l2_norm": 1.149330973625183,
+          "output_l2_norm": 1.1008594036102295
+        },
+        {
+          "sample_index": 6,
+          "seed": 20260608,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.17996403125433358,
+          "l2_error": 0.2068382352590561,
+          "max_absolute_error": 0.012483697384595871,
+          "mean_absolute_error": 0.0025677168741822243,
+          "cosine_similarity": 0.983732283115387,
+          "reference_l2_norm": 1.149330973625183,
+          "output_l2_norm": 1.1182414293289185
+        },
+        {
+          "sample_index": 6,
+          "seed": 20260608,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.17225638548048616,
+          "l2_error": 0.19797959923744202,
+          "max_absolute_error": 0.01127314567565918,
+          "mean_absolute_error": 0.002460526069626212,
+          "cosine_similarity": 0.9851045608520508,
+          "reference_l2_norm": 1.149330973625183,
+          "output_l2_norm": 1.1205257177352905
+        },
+        {
+          "sample_index": 6,
+          "seed": 20260608,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1596309444994221,
+          "l2_error": 0.1834687888622284,
+          "max_absolute_error": 0.009931604377925396,
+          "mean_absolute_error": 0.0022852651309221983,
+          "cosine_similarity": 0.987191915512085,
+          "reference_l2_norm": 1.149330973625183,
+          "output_l2_norm": 1.1283040046691895
+        },
+        {
+          "sample_index": 6,
+          "seed": 20260608,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.15560527603835464,
+          "l2_error": 0.1788419634103775,
+          "max_absolute_error": 0.01010738592594862,
+          "mean_absolute_error": 0.0022311711218208075,
+          "cosine_similarity": 0.9878444671630859,
+          "reference_l2_norm": 1.149330973625183,
+          "output_l2_norm": 1.1272501945495605
+        },
+        {
+          "sample_index": 6,
+          "seed": 20260608,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.17153727764768334,
+          "l2_error": 0.19715310633182526,
+          "max_absolute_error": 0.01345033198595047,
+          "mean_absolute_error": 0.0024566270876675844,
+          "cosine_similarity": 0.9852941036224365,
+          "reference_l2_norm": 1.149330973625183,
+          "output_l2_norm": 1.1150158643722534
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_5554444333",
+      "reference_output_l2_norm": 1.149330973625183,
+      "elapsed_s": 0.5594804286956787
+    },
+    {
+      "sample_index": 7,
+      "seed": 20260609,
+      "router_logits_l2_norm": 81.69977569580078,
+      "top10_routed_weight_sum": 1.0,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 16,
+          "routed_weight": 0.1815948337316513,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.03050851821899414
+        },
+        {
+          "rank": 2,
+          "expert_id": 451,
+          "routed_weight": 0.16361558437347412,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.023175954818725586
+        },
+        {
+          "rank": 3,
+          "expert_id": 350,
+          "routed_weight": 0.1303100287914276,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024431467056274414
+        },
+        {
+          "rank": 4,
+          "expert_id": 494,
+          "routed_weight": 0.10001825541257858,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.019292116165161133
+        },
+        {
+          "rank": 5,
+          "expert_id": 48,
+          "routed_weight": 0.09646104276180267,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.013495922088623047
+        },
+        {
+          "rank": 6,
+          "expert_id": 263,
+          "routed_weight": 0.08935628831386566,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.018310070037841797
+        },
+        {
+          "rank": 7,
+          "expert_id": 283,
+          "routed_weight": 0.06809217482805252,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022748947143554688
+        },
+        {
+          "rank": 8,
+          "expert_id": 14,
+          "routed_weight": 0.06764180213212967,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022359371185302734
+        },
+        {
+          "rank": 9,
+          "expert_id": 347,
+          "routed_weight": 0.05260073393583298,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022421598434448242
+        },
+        {
+          "rank": 10,
+          "expert_id": 363,
+          "routed_weight": 0.050309281796216965,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02473616600036621
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dynamic_precisions": [
+        5,
+        5,
+        5,
+        4,
+        4,
+        4,
+        3,
+        4,
+        3,
+        3
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 7,
+          "seed": 20260609,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1542200378917127,
+          "l2_error": 0.25161653757095337,
+          "max_absolute_error": 0.020024865865707397,
+          "mean_absolute_error": 0.0031299032270908356,
+          "cosine_similarity": 0.9883109331130981,
+          "reference_l2_norm": 1.631542444229126,
+          "output_l2_norm": 1.57447350025177
+        },
+        {
+          "sample_index": 7,
+          "seed": 20260609,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.11715802838882772,
+          "l2_error": 0.1911482959985733,
+          "max_absolute_error": 0.010638773441314697,
+          "mean_absolute_error": 0.00238631758838892,
+          "cosine_similarity": 0.9932206869125366,
+          "reference_l2_norm": 1.631542444229126,
+          "output_l2_norm": 1.5966449975967407
+        },
+        {
+          "sample_index": 7,
+          "seed": 20260609,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.12109123894794602,
+          "l2_error": 0.197565495967865,
+          "max_absolute_error": 0.01133947167545557,
+          "mean_absolute_error": 0.002473625121638179,
+          "cosine_similarity": 0.9927352666854858,
+          "reference_l2_norm": 1.631542444229126,
+          "output_l2_norm": 1.5973845720291138
+        },
+        {
+          "sample_index": 7,
+          "seed": 20260609,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.12023977139299902,
+          "l2_error": 0.19617629051208496,
+          "max_absolute_error": 0.012204648926854134,
+          "mean_absolute_error": 0.0024623030330985785,
+          "cosine_similarity": 0.9928019046783447,
+          "reference_l2_norm": 1.631542444229126,
+          "output_l2_norm": 1.6024060249328613
+        },
+        {
+          "sample_index": 7,
+          "seed": 20260609,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1079056298346457,
+          "l2_error": 0.17605261504650116,
+          "max_absolute_error": 0.010245436802506447,
+          "mean_absolute_error": 0.0021827786695212126,
+          "cosine_similarity": 0.9942501783370972,
+          "reference_l2_norm": 1.631542444229126,
+          "output_l2_norm": 1.600449562072754
+        },
+        {
+          "sample_index": 7,
+          "seed": 20260609,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13905593667276275,
+          "l2_error": 0.2268756628036499,
+          "max_absolute_error": 0.015043478459119797,
+          "mean_absolute_error": 0.0028180249501019716,
+          "cosine_similarity": 0.9903286099433899,
+          "reference_l2_norm": 1.631542444229126,
+          "output_l2_norm": 1.6004891395568848
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_5554444333",
+      "reference_output_l2_norm": 1.631542444229126,
+      "elapsed_s": 0.5614650249481201
+    },
+    {
+      "sample_index": 8,
+      "seed": 20260610,
+      "router_logits_l2_norm": 53.27168655395508,
+      "top10_routed_weight_sum": 1.0000001192092896,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 120,
+          "routed_weight": 0.2614850401878357,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.03077387809753418
+        },
+        {
+          "rank": 2,
+          "expert_id": 219,
+          "routed_weight": 0.1194801926612854,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024516820907592773
+        },
+        {
+          "rank": 3,
+          "expert_id": 313,
+          "routed_weight": 0.11374358832836151,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024436473846435547
+        },
+        {
+          "rank": 4,
+          "expert_id": 388,
+          "routed_weight": 0.09952571988105774,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.019092798233032227
+        },
+        {
+          "rank": 5,
+          "expert_id": 308,
+          "routed_weight": 0.07900314778089523,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.018435001373291016
+        },
+        {
+          "rank": 6,
+          "expert_id": 174,
+          "routed_weight": 0.07782994955778122,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.01796245574951172
+        },
+        {
+          "rank": 7,
+          "expert_id": 226,
+          "routed_weight": 0.07466262578964233,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02175617218017578
+        },
+        {
+          "rank": 8,
+          "expert_id": 460,
+          "routed_weight": 0.06172977387905121,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021416664123535156
+        },
+        {
+          "rank": 9,
+          "expert_id": 93,
+          "routed_weight": 0.057485878467559814,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022203922271728516
+        },
+        {
+          "rank": 10,
+          "expert_id": 127,
+          "routed_weight": 0.05505412817001343,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02219104766845703
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        4,
+        0,
+        0
+      ],
+      "dynamic_precisions": [
+        5,
+        5,
+        5,
+        4,
+        3,
+        4,
+        4,
+        4,
+        4,
+        2
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 8,
+          "seed": 20260610,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.2029582625452557,
+          "l2_error": 0.3078797161579132,
+          "max_absolute_error": 0.026334762573242188,
+          "mean_absolute_error": 0.0038388767279684544,
+          "cosine_similarity": 0.9796887636184692,
+          "reference_l2_norm": 1.5169607400894165,
+          "output_l2_norm": 1.4386177062988281
+        },
+        {
+          "sample_index": 8,
+          "seed": 20260610,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.15282717018977085,
+          "l2_error": 0.231832817196846,
+          "max_absolute_error": 0.021348580718040466,
+          "mean_absolute_error": 0.0028659196104854345,
+          "cosine_similarity": 0.9884724020957947,
+          "reference_l2_norm": 1.5169607400894165,
+          "output_l2_norm": 1.4678831100463867
+        },
+        {
+          "sample_index": 8,
+          "seed": 20260610,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.14460865767887612,
+          "l2_error": 0.219365656375885,
+          "max_absolute_error": 0.020445004105567932,
+          "mean_absolute_error": 0.002706314902752638,
+          "cosine_similarity": 0.989618182182312,
+          "reference_l2_norm": 1.5169607400894165,
+          "output_l2_norm": 1.476966142654419
+        },
+        {
+          "sample_index": 8,
+          "seed": 20260610,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.14362489036508613,
+          "l2_error": 0.21787331998348236,
+          "max_absolute_error": 0.019958585500717163,
+          "mean_absolute_error": 0.0026961497496813536,
+          "cosine_similarity": 0.9897610545158386,
+          "reference_l2_norm": 1.5169607400894165,
+          "output_l2_norm": 1.4772018194198608
+        },
+        {
+          "sample_index": 8,
+          "seed": 20260610,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1205807139681776,
+          "l2_error": 0.18291620910167694,
+          "max_absolute_error": 0.010176416486501694,
+          "mean_absolute_error": 0.0022645113058388233,
+          "cosine_similarity": 0.9927140474319458,
+          "reference_l2_norm": 1.5169607400894165,
+          "output_l2_norm": 1.4990248680114746
+        },
+        {
+          "sample_index": 8,
+          "seed": 20260610,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.14079283026758974,
+          "l2_error": 0.21357719600200653,
+          "max_absolute_error": 0.012295044027268887,
+          "mean_absolute_error": 0.0026594132650643587,
+          "cosine_similarity": 0.9901083707809448,
+          "reference_l2_norm": 1.5169607400894165,
+          "output_l2_norm": 1.484208106994629
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_5554444333",
+      "reference_output_l2_norm": 1.5169607400894165,
+      "elapsed_s": 0.5637068748474121
+    },
+    {
+      "sample_index": 9,
+      "seed": 20260611,
+      "router_logits_l2_norm": 39.9934196472168,
+      "top10_routed_weight_sum": 1.0000001192092896,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 288,
+          "routed_weight": 0.5112358331680298,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.030300140380859375
+        },
+        {
+          "rank": 2,
+          "expert_id": 104,
+          "routed_weight": 0.13523469865322113,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.02422499656677246
+        },
+        {
+          "rank": 3,
+          "expert_id": 43,
+          "routed_weight": 0.11470752954483032,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.023334980010986328
+        },
+        {
+          "rank": 4,
+          "expert_id": 143,
+          "routed_weight": 0.0666717067360878,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.018768310546875
+        },
+        {
+          "rank": 5,
+          "expert_id": 474,
+          "routed_weight": 0.054046742618083954,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.017637014389038086
+        },
+        {
+          "rank": 6,
+          "expert_id": 484,
+          "routed_weight": 0.03074081614613533,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021854877471923828
+        },
+        {
+          "rank": 7,
+          "expert_id": 130,
+          "routed_weight": 0.030648071318864822,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021965980529785156
+        },
+        {
+          "rank": 8,
+          "expert_id": 280,
+          "routed_weight": 0.024121910333633423,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022164344787597656
+        },
+        {
+          "rank": 9,
+          "expert_id": 375,
+          "routed_weight": 0.017236914485692978,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021372079849243164
+        },
+        {
+          "rank": 10,
+          "expert_id": 261,
+          "routed_weight": 0.015355910174548626,
+          "required_levels": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02597784996032715
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        3,
+        0,
+        5,
+        0,
+        0,
+        0,
+        4,
+        0
+      ],
+      "dynamic_precisions": [
+        8,
+        6,
+        5,
+        4,
+        5,
+        2,
+        3,
+        2,
+        4,
+        1
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 9,
+          "seed": 20260611,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.03786467994515809,
+          "l2_error": 0.12010758370161057,
+          "max_absolute_error": 0.008064229041337967,
+          "mean_absolute_error": 0.0015069631626829505,
+          "cosine_similarity": 0.9992870092391968,
+          "reference_l2_norm": 3.1720216274261475,
+          "output_l2_norm": 3.160770893096924
+        },
+        {
+          "sample_index": 9,
+          "seed": 20260611,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.04528790444350725,
+          "l2_error": 0.1436542123556137,
+          "max_absolute_error": 0.010748863220214844,
+          "mean_absolute_error": 0.001798915909603238,
+          "cosine_similarity": 0.998988151550293,
+          "reference_l2_norm": 3.1720216274261475,
+          "output_l2_norm": 3.15195369720459
+        },
+        {
+          "sample_index": 9,
+          "seed": 20260611,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.047162445526574136,
+          "l2_error": 0.1496002972126007,
+          "max_absolute_error": 0.010123014450073242,
+          "mean_absolute_error": 0.001867542159743607,
+          "cosine_similarity": 0.9989051818847656,
+          "reference_l2_norm": 3.1720216274261475,
+          "output_l2_norm": 3.1495895385742188
+        },
+        {
+          "sample_index": 9,
+          "seed": 20260611,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.06915791274826424,
+          "l2_error": 0.21937039494514465,
+          "max_absolute_error": 0.013270199298858643,
+          "mean_absolute_error": 0.0027115100529044867,
+          "cosine_similarity": 0.9976097345352173,
+          "reference_l2_norm": 3.1720216274261475,
+          "output_l2_norm": 3.1554973125457764
+        },
+        {
+          "sample_index": 9,
+          "seed": 20260611,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.07049090930136542,
+          "l2_error": 0.2235986888408661,
+          "max_absolute_error": 0.013330049812793732,
+          "mean_absolute_error": 0.0027710827998816967,
+          "cosine_similarity": 0.9975176453590393,
+          "reference_l2_norm": 3.1720216274261475,
+          "output_l2_norm": 3.15391206741333
+        },
+        {
+          "sample_index": 9,
+          "seed": 20260611,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13040968593677457,
+          "l2_error": 0.4136623442173004,
+          "max_absolute_error": 0.04339200258255005,
+          "mean_absolute_error": 0.005141031928360462,
+          "cosine_similarity": 0.9915711879730225,
+          "reference_l2_norm": 3.1720216274261475,
+          "output_l2_norm": 3.098236322402954
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_8665432222",
+      "reference_output_l2_norm": 3.1720216274261475,
+      "elapsed_s": 0.5690703392028809
+    },
+    {
+      "sample_index": 10,
+      "seed": 20260612,
+      "router_logits_l2_norm": 34.86566925048828,
+      "top10_routed_weight_sum": 1.0,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 498,
+          "routed_weight": 0.2621089816093445,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.029106855392456055
+        },
+        {
+          "rank": 2,
+          "expert_id": 44,
+          "routed_weight": 0.12971846759319305,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.02400803565979004
+        },
+        {
+          "rank": 3,
+          "expert_id": 182,
+          "routed_weight": 0.12890338897705078,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024423837661743164
+        },
+        {
+          "rank": 4,
+          "expert_id": 256,
+          "routed_weight": 0.1052699014544487,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.019085407257080078
+        },
+        {
+          "rank": 5,
+          "expert_id": 251,
+          "routed_weight": 0.08390410989522934,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.017751455307006836
+        },
+        {
+          "rank": 6,
+          "expert_id": 300,
+          "routed_weight": 0.06783604621887207,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.01889324188232422
+        },
+        {
+          "rank": 7,
+          "expert_id": 363,
+          "routed_weight": 0.06023159250617027,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.020868539810180664
+        },
+        {
+          "rank": 8,
+          "expert_id": 127,
+          "routed_weight": 0.05762529373168945,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.020986557006835938
+        },
+        {
+          "rank": 9,
+          "expert_id": 454,
+          "routed_weight": 0.052966877818107605,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022162199020385742
+        },
+        {
+          "rank": 10,
+          "expert_id": 441,
+          "routed_weight": 0.051435425877571106,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.023384571075439453
+        }
+      ],
+      "cached_precisions_before": [
+        4,
+        0,
+        0,
+        0,
+        5,
+        0,
+        3,
+        2,
+        0,
+        0
+      ],
+      "dynamic_precisions": [
+        6,
+        5,
+        4,
+        4,
+        5,
+        4,
+        4,
+        3,
+        3,
+        2
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 10,
+          "seed": 20260612,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.19183550068975042,
+          "l2_error": 0.2086269110441208,
+          "max_absolute_error": 0.011668777093291283,
+          "mean_absolute_error": 0.0025993348099291325,
+          "cosine_similarity": 0.9814934730529785,
+          "reference_l2_norm": 1.087530255317688,
+          "output_l2_norm": 1.0549794435501099
+        },
+        {
+          "sample_index": 10,
+          "seed": 20260612,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.14400989985054038,
+          "l2_error": 0.15661512315273285,
+          "max_absolute_error": 0.00925661064684391,
+          "mean_absolute_error": 0.0019449753453955054,
+          "cosine_similarity": 0.9896056056022644,
+          "reference_l2_norm": 1.087530255317688,
+          "output_l2_norm": 1.0679123401641846
+        },
+        {
+          "sample_index": 10,
+          "seed": 20260612,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13913216955419158,
+          "l2_error": 0.15131044387817383,
+          "max_absolute_error": 0.008633197285234928,
+          "mean_absolute_error": 0.001888229395262897,
+          "cosine_similarity": 0.9902885556221008,
+          "reference_l2_norm": 1.087530255317688,
+          "output_l2_norm": 1.0710994005203247
+        },
+        {
+          "sample_index": 10,
+          "seed": 20260612,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13925563679830844,
+          "l2_error": 0.1514447182416916,
+          "max_absolute_error": 0.009289434179663658,
+          "mean_absolute_error": 0.0018825203878805041,
+          "cosine_similarity": 0.9902689456939697,
+          "reference_l2_norm": 1.087530255317688,
+          "output_l2_norm": 1.0715367794036865
+        },
+        {
+          "sample_index": 10,
+          "seed": 20260612,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13049680665010388,
+          "l2_error": 0.14191922545433044,
+          "max_absolute_error": 0.008035588078200817,
+          "mean_absolute_error": 0.0017638702411204576,
+          "cosine_similarity": 0.9914578199386597,
+          "reference_l2_norm": 1.087530255317688,
+          "output_l2_norm": 1.0735875368118286
+        },
+        {
+          "sample_index": 10,
+          "seed": 20260612,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.16768787820492795,
+          "l2_error": 0.18236564099788666,
+          "max_absolute_error": 0.010995859280228615,
+          "mean_absolute_error": 0.0022709232289344072,
+          "cosine_similarity": 0.9859832525253296,
+          "reference_l2_norm": 1.087530255317688,
+          "output_l2_norm": 1.054014801979065
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_5554444333",
+      "reference_output_l2_norm": 1.087530255317688,
+      "elapsed_s": 0.5619184970855713
+    },
+    {
+      "sample_index": 11,
+      "seed": 20260613,
+      "router_logits_l2_norm": 61.474143981933594,
+      "top10_routed_weight_sum": 0.9999999403953552,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 395,
+          "routed_weight": 0.5781417489051819,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.030275344848632812
+        },
+        {
+          "rank": 2,
+          "expert_id": 10,
+          "routed_weight": 0.12238455563783646,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.023039817810058594
+        },
+        {
+          "rank": 3,
+          "expert_id": 43,
+          "routed_weight": 0.06920209527015686,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.023047685623168945
+        },
+        {
+          "rank": 4,
+          "expert_id": 85,
+          "routed_weight": 0.06578036397695541,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.019092798233032227
+        },
+        {
+          "rank": 5,
+          "expert_id": 380,
+          "routed_weight": 0.0536525696516037,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.013125419616699219
+        },
+        {
+          "rank": 6,
+          "expert_id": 70,
+          "routed_weight": 0.03422936424612999,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.01789546012878418
+        },
+        {
+          "rank": 7,
+          "expert_id": 389,
+          "routed_weight": 0.02366756461560726,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02150583267211914
+        },
+        {
+          "rank": 8,
+          "expert_id": 28,
+          "routed_weight": 0.02234688028693199,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021799802780151367
+        },
+        {
+          "rank": 9,
+          "expert_id": 280,
+          "routed_weight": 0.015634724870324135,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021120071411132812
+        },
+        {
+          "rank": 10,
+          "expert_id": 324,
+          "routed_weight": 0.014960139989852905,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022229671478271484
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        4,
+        5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "dynamic_precisions": [
+        8,
+        5,
+        5,
+        4,
+        4,
+        3,
+        3,
+        3,
+        3,
+        2
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 11,
+          "seed": 20260613,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.04611979303701813,
+          "l2_error": 0.0959128811955452,
+          "max_absolute_error": 0.008858293294906616,
+          "mean_absolute_error": 0.0011931301560252905,
+          "cosine_similarity": 0.998937726020813,
+          "reference_l2_norm": 2.0796468257904053,
+          "output_l2_norm": 2.073491334915161
+        },
+        {
+          "sample_index": 11,
+          "seed": 20260613,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.053719497158611164,
+          "l2_error": 0.1117175817489624,
+          "max_absolute_error": 0.010929137468338013,
+          "mean_absolute_error": 0.0013914484297856688,
+          "cosine_similarity": 0.9985712766647339,
+          "reference_l2_norm": 2.0796468257904053,
+          "output_l2_norm": 2.065159559249878
+        },
+        {
+          "sample_index": 11,
+          "seed": 20260613,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.0543213053662118,
+          "l2_error": 0.11296913027763367,
+          "max_absolute_error": 0.011025950312614441,
+          "mean_absolute_error": 0.0014034613268449903,
+          "cosine_similarity": 0.9985389709472656,
+          "reference_l2_norm": 2.0796468257904053,
+          "output_l2_norm": 2.0649969577789307
+        },
+        {
+          "sample_index": 11,
+          "seed": 20260613,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.08731939018449739,
+          "l2_error": 0.18159349262714386,
+          "max_absolute_error": 0.014419063925743103,
+          "mean_absolute_error": 0.002238278044387698,
+          "cosine_similarity": 0.9962413311004639,
+          "reference_l2_norm": 2.0796468257904053,
+          "output_l2_norm": 2.0488944053649902
+        },
+        {
+          "sample_index": 11,
+          "seed": 20260613,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.08649556712617042,
+          "l2_error": 0.17988023161888123,
+          "max_absolute_error": 0.01483064889907837,
+          "mean_absolute_error": 0.00221999641507864,
+          "cosine_similarity": 0.9963163733482361,
+          "reference_l2_norm": 2.0796468257904053,
+          "output_l2_norm": 2.04845929145813
+        },
+        {
+          "sample_index": 11,
+          "seed": 20260613,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.15914576223269225,
+          "l2_error": 0.330966979265213,
+          "max_absolute_error": 0.02455149032175541,
+          "mean_absolute_error": 0.004073734860867262,
+          "cosine_similarity": 0.9875527620315552,
+          "reference_l2_norm": 2.0796468257904053,
+          "output_l2_norm": 2.0033364295959473
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_8665432222",
+      "reference_output_l2_norm": 2.0796468257904053,
+      "elapsed_s": 0.5544953346252441
+    },
+    {
+      "sample_index": 12,
+      "seed": 20260614,
+      "router_logits_l2_norm": 42.307533264160156,
+      "top10_routed_weight_sum": 1.0000001192092896,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 191,
+          "routed_weight": 0.4637119770050049,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.03020501136779785
+        },
+        {
+          "rank": 2,
+          "expert_id": 415,
+          "routed_weight": 0.07582885026931763,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.02405261993408203
+        },
+        {
+          "rank": 3,
+          "expert_id": 274,
+          "routed_weight": 0.07087896764278412,
+          "required_levels": [
+            3,
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.03226876258850098
+        },
+        {
+          "rank": 4,
+          "expert_id": 495,
+          "routed_weight": 0.07066615670919418,
+          "required_levels": [
+            3,
+            4,
+            5
+          ],
+          "elapsed_s": 0.02324986457824707
+        },
+        {
+          "rank": 5,
+          "expert_id": 158,
+          "routed_weight": 0.0665021613240242,
+          "required_levels": [
+            2,
+            4
+          ],
+          "elapsed_s": 0.02119922637939453
+        },
+        {
+          "rank": 6,
+          "expert_id": 309,
+          "routed_weight": 0.05974424630403519,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.018187999725341797
+        },
+        {
+          "rank": 7,
+          "expert_id": 327,
+          "routed_weight": 0.05344478785991669,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02189326286315918
+        },
+        {
+          "rank": 8,
+          "expert_id": 341,
+          "routed_weight": 0.05304336920380592,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022077322006225586
+        },
+        {
+          "rank": 9,
+          "expert_id": 288,
+          "routed_weight": 0.051738422363996506,
+          "required_levels": [
+            2,
+            3,
+            4,
+            8
+          ],
+          "elapsed_s": 0.027193784713745117
+        },
+        {
+          "rank": 10,
+          "expert_id": 43,
+          "routed_weight": 0.034441135823726654,
+          "required_levels": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "elapsed_s": 0.025835752487182617
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        8,
+        5
+      ],
+      "dynamic_precisions": [
+        6,
+        4,
+        3,
+        3,
+        2,
+        3,
+        3,
+        3,
+        8,
+        5
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 12,
+          "seed": 20260614,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1715304624663539,
+          "l2_error": 0.2556299567222595,
+          "max_absolute_error": 0.029674813151359558,
+          "mean_absolute_error": 0.0031815150287002325,
+          "cosine_similarity": 0.9854485988616943,
+          "reference_l2_norm": 1.4902889728546143,
+          "output_l2_norm": 1.43424654006958
+        },
+        {
+          "sample_index": 12,
+          "seed": 20260614,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.14104927828371908,
+          "l2_error": 0.21020418405532837,
+          "max_absolute_error": 0.02100980281829834,
+          "mean_absolute_error": 0.0026247468777000904,
+          "cosine_similarity": 0.9902190566062927,
+          "reference_l2_norm": 1.4902889728546143,
+          "output_l2_norm": 1.4448628425598145
+        },
+        {
+          "sample_index": 12,
+          "seed": 20260614,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13778753664574908,
+          "l2_error": 0.20534324645996094,
+          "max_absolute_error": 0.020401105284690857,
+          "mean_absolute_error": 0.0025650179013609886,
+          "cosine_similarity": 0.9906486868858337,
+          "reference_l2_norm": 1.4902889728546143,
+          "output_l2_norm": 1.4476861953735352
+        },
+        {
+          "sample_index": 12,
+          "seed": 20260614,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1479722652172348,
+          "l2_error": 0.22052143514156342,
+          "max_absolute_error": 0.019815102219581604,
+          "mean_absolute_error": 0.0027588102966547012,
+          "cosine_similarity": 0.9891704320907593,
+          "reference_l2_norm": 1.4902889728546143,
+          "output_l2_norm": 1.446107029914856
+        },
+        {
+          "sample_index": 12,
+          "seed": 20260614,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.11548428382307652,
+          "l2_error": 0.17210495471954346,
+          "max_absolute_error": 0.011402159929275513,
+          "mean_absolute_error": 0.002128880936652422,
+          "cosine_similarity": 0.9934077262878418,
+          "reference_l2_norm": 1.4902889728546143,
+          "output_l2_norm": 1.459638237953186
+        },
+        {
+          "sample_index": 12,
+          "seed": 20260614,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.16523698251002883,
+          "l2_error": 0.24625085294246674,
+          "max_absolute_error": 0.015339285135269165,
+          "mean_absolute_error": 0.0030767847783863544,
+          "cosine_similarity": 0.9862770438194275,
+          "reference_l2_norm": 1.4902889728546143,
+          "output_l2_norm": 1.4597657918930054
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_5554444333",
+      "reference_output_l2_norm": 1.4902889728546143,
+      "elapsed_s": 0.587355375289917
+    },
+    {
+      "sample_index": 13,
+      "seed": 20260615,
+      "router_logits_l2_norm": 86.49092102050781,
+      "top10_routed_weight_sum": 1.0,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 467,
+          "routed_weight": 0.26719507575035095,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.029992103576660156
+        },
+        {
+          "rank": 2,
+          "expert_id": 173,
+          "routed_weight": 0.24226032197475433,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.023941993713378906
+        },
+        {
+          "rank": 3,
+          "expert_id": 218,
+          "routed_weight": 0.23707319796085358,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.0241241455078125
+        },
+        {
+          "rank": 4,
+          "expert_id": 295,
+          "routed_weight": 0.04958139359951019,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.01798558235168457
+        },
+        {
+          "rank": 5,
+          "expert_id": 311,
+          "routed_weight": 0.0383688248693943,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.01742863655090332
+        },
+        {
+          "rank": 6,
+          "expert_id": 2,
+          "routed_weight": 0.03740207105875015,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.01660895347595215
+        },
+        {
+          "rank": 7,
+          "expert_id": 363,
+          "routed_weight": 0.036878928542137146,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.020632505416870117
+        },
+        {
+          "rank": 8,
+          "expert_id": 53,
+          "routed_weight": 0.03449597582221031,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021793127059936523
+        },
+        {
+          "rank": 9,
+          "expert_id": 328,
+          "routed_weight": 0.03233318030834198,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021999359130859375
+        },
+        {
+          "rank": 10,
+          "expert_id": 7,
+          "routed_weight": 0.0244110319763422,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021961450576782227
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        0,
+        3,
+        0,
+        4,
+        4,
+        0,
+        0,
+        0
+      ],
+      "dynamic_precisions": [
+        6,
+        6,
+        6,
+        4,
+        3,
+        4,
+        4,
+        2,
+        3,
+        2
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 13,
+          "seed": 20260615,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.09857283309633369,
+          "l2_error": 0.10227010399103165,
+          "max_absolute_error": 0.005381286144256592,
+          "mean_absolute_error": 0.0012803218560293317,
+          "cosine_similarity": 0.9951369762420654,
+          "reference_l2_norm": 1.0375080108642578,
+          "output_l2_norm": 1.0285165309906006
+        },
+        {
+          "sample_index": 13,
+          "seed": 20260615,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.09104123397379921,
+          "l2_error": 0.0944560095667839,
+          "max_absolute_error": 0.005302364006638527,
+          "mean_absolute_error": 0.001176726771518588,
+          "cosine_similarity": 0.9958917498588562,
+          "reference_l2_norm": 1.0375080108642578,
+          "output_l2_norm": 1.0234715938568115
+        },
+        {
+          "sample_index": 13,
+          "seed": 20260615,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.09438663732206642,
+          "l2_error": 0.09792689234018326,
+          "max_absolute_error": 0.005270733032375574,
+          "mean_absolute_error": 0.0012181439669802785,
+          "cosine_similarity": 0.9955753684043884,
+          "reference_l2_norm": 1.0375080108642578,
+          "output_l2_norm": 1.023683786392212
+        },
+        {
+          "sample_index": 13,
+          "seed": 20260615,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1028454190320671,
+          "l2_error": 0.10670294612646103,
+          "max_absolute_error": 0.006728567648679018,
+          "mean_absolute_error": 0.0013391671236604452,
+          "cosine_similarity": 0.9947150945663452,
+          "reference_l2_norm": 1.0375080108642578,
+          "output_l2_norm": 1.0258523225784302
+        },
+        {
+          "sample_index": 13,
+          "seed": 20260615,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.09350980231747963,
+          "l2_error": 0.09701716899871826,
+          "max_absolute_error": 0.005567818880081177,
+          "mean_absolute_error": 0.0012097654398530722,
+          "cosine_similarity": 0.9956299066543579,
+          "reference_l2_norm": 1.0375080108642578,
+          "output_l2_norm": 1.0280232429504395
+        },
+        {
+          "sample_index": 13,
+          "seed": 20260615,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.16297214557140047,
+          "l2_error": 0.16908490657806396,
+          "max_absolute_error": 0.012011848390102386,
+          "mean_absolute_error": 0.0021065748296678066,
+          "cosine_similarity": 0.9867054224014282,
+          "reference_l2_norm": 1.0375080108642578,
+          "output_l2_norm": 1.011124849319458
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_6655443322",
+      "reference_output_l2_norm": 1.0375080108642578,
+      "elapsed_s": 0.5610537528991699
+    },
+    {
+      "sample_index": 14,
+      "seed": 20260616,
+      "router_logits_l2_norm": 45.51253890991211,
+      "top10_routed_weight_sum": 0.9999998807907104,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 42,
+          "routed_weight": 0.19704613089561462,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.03031325340270996
+        },
+        {
+          "rank": 2,
+          "expert_id": 361,
+          "routed_weight": 0.1791449785232544,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.02410125732421875
+        },
+        {
+          "rank": 3,
+          "expert_id": 265,
+          "routed_weight": 0.13223500549793243,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.023794889450073242
+        },
+        {
+          "rank": 4,
+          "expert_id": 466,
+          "routed_weight": 0.12469088286161423,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.01882624626159668
+        },
+        {
+          "rank": 5,
+          "expert_id": 24,
+          "routed_weight": 0.08240962773561478,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.013059139251708984
+        },
+        {
+          "rank": 6,
+          "expert_id": 421,
+          "routed_weight": 0.06858881562948227,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.017834186553955078
+        },
+        {
+          "rank": 7,
+          "expert_id": 110,
+          "routed_weight": 0.05704410746693611,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021853923797607422
+        },
+        {
+          "rank": 8,
+          "expert_id": 187,
+          "routed_weight": 0.05484534054994583,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022200345993041992
+        },
+        {
+          "rank": 9,
+          "expert_id": 476,
+          "routed_weight": 0.0522005520761013,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02222466468811035
+        },
+        {
+          "rank": 10,
+          "expert_id": 209,
+          "routed_weight": 0.051794521510601044,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.0214998722076416
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3
+      ],
+      "dynamic_precisions": [
+        5,
+        5,
+        4,
+        5,
+        4,
+        4,
+        4,
+        3,
+        3,
+        3
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 14,
+          "seed": 20260616,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1875119065221553,
+          "l2_error": 0.2893524169921875,
+          "max_absolute_error": 0.01854264736175537,
+          "mean_absolute_error": 0.003614733461290598,
+          "cosine_similarity": 0.9828376770019531,
+          "reference_l2_norm": 1.5431149005889893,
+          "output_l2_norm": 1.464737057685852
+        },
+        {
+          "sample_index": 14,
+          "seed": 20260616,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13899609265217133,
+          "l2_error": 0.21448694169521332,
+          "max_absolute_error": 0.013159706257283688,
+          "mean_absolute_error": 0.002662437967956066,
+          "cosine_similarity": 0.9904855489730835,
+          "reference_l2_norm": 1.5431149005889893,
+          "output_l2_norm": 1.498276948928833
+        },
+        {
+          "sample_index": 14,
+          "seed": 20260616,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1341562990118031,
+          "l2_error": 0.20701858401298523,
+          "max_absolute_error": 0.011420929804444313,
+          "mean_absolute_error": 0.002553557977080345,
+          "cosine_similarity": 0.9910579919815063,
+          "reference_l2_norm": 1.5431149005889893,
+          "output_l2_norm": 1.5078128576278687
+        },
+        {
+          "sample_index": 14,
+          "seed": 20260616,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13283106350407808,
+          "l2_error": 0.20497359335422516,
+          "max_absolute_error": 0.011221630498766899,
+          "mean_absolute_error": 0.00253678928129375,
+          "cosine_similarity": 0.9911808371543884,
+          "reference_l2_norm": 1.5431149005889893,
+          "output_l2_norm": 1.5154032707214355
+        },
+        {
+          "sample_index": 14,
+          "seed": 20260616,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1173557810191844,
+          "l2_error": 0.18109345436096191,
+          "max_absolute_error": 0.010993083007633686,
+          "mean_absolute_error": 0.002257393905892968,
+          "cosine_similarity": 0.993121862411499,
+          "reference_l2_norm": 1.5431149005889893,
+          "output_l2_norm": 1.52020263671875
+        },
+        {
+          "sample_index": 14,
+          "seed": 20260616,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13999424160803597,
+          "l2_error": 0.21602720022201538,
+          "max_absolute_error": 0.012937426567077637,
+          "mean_absolute_error": 0.002701549557968974,
+          "cosine_similarity": 0.9901778697967529,
+          "reference_l2_norm": 1.5431149005889893,
+          "output_l2_norm": 1.5169588327407837
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_5554444333",
+      "reference_output_l2_norm": 1.5431149005889893,
+      "elapsed_s": 0.555687665939331
+    },
+    {
+      "sample_index": 15,
+      "seed": 20260617,
+      "router_logits_l2_norm": 68.65552520751953,
+      "top10_routed_weight_sum": 1.0,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 307,
+          "routed_weight": 0.2793368995189667,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.030393600463867188
+        },
+        {
+          "rank": 2,
+          "expert_id": 446,
+          "routed_weight": 0.19692443311214447,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024291276931762695
+        },
+        {
+          "rank": 3,
+          "expert_id": 75,
+          "routed_weight": 0.14038848876953125,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024206876754760742
+        },
+        {
+          "rank": 4,
+          "expert_id": 459,
+          "routed_weight": 0.11148461699485779,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.019219160079956055
+        },
+        {
+          "rank": 5,
+          "expert_id": 328,
+          "routed_weight": 0.0654054656624794,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.012284278869628906
+        },
+        {
+          "rank": 6,
+          "expert_id": 1,
+          "routed_weight": 0.04877828434109688,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.017431020736694336
+        },
+        {
+          "rank": 7,
+          "expert_id": 348,
+          "routed_weight": 0.04802520573139191,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.020339250564575195
+        },
+        {
+          "rank": 8,
+          "expert_id": 460,
+          "routed_weight": 0.045908838510513306,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021081924438476562
+        },
+        {
+          "rank": 9,
+          "expert_id": 87,
+          "routed_weight": 0.033027660101652145,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022246360778808594
+        },
+        {
+          "rank": 10,
+          "expert_id": 84,
+          "routed_weight": 0.030720053240656853,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02217864990234375
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        4,
+        4,
+        0,
+        0
+      ],
+      "dynamic_precisions": [
+        6,
+        5,
+        5,
+        4,
+        4,
+        3,
+        4,
+        4,
+        3,
+        2
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 15,
+          "seed": 20260617,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.14987002056161547,
+          "l2_error": 0.17539528012275696,
+          "max_absolute_error": 0.011801961809396744,
+          "mean_absolute_error": 0.0021788794547319412,
+          "cosine_similarity": 0.9887138605117798,
+          "reference_l2_norm": 1.1703159809112549,
+          "output_l2_norm": 1.152329444885254
+        },
+        {
+          "sample_index": 15,
+          "seed": 20260617,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.10844605840574446,
+          "l2_error": 0.12691615521907806,
+          "max_absolute_error": 0.008524183183908463,
+          "mean_absolute_error": 0.0015755320200696588,
+          "cosine_similarity": 0.9941132664680481,
+          "reference_l2_norm": 1.1703159809112549,
+          "output_l2_norm": 1.157960295677185
+        },
+        {
+          "sample_index": 15,
+          "seed": 20260617,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1037847312128501,
+          "l2_error": 0.1214609295129776,
+          "max_absolute_error": 0.008206181228160858,
+          "mean_absolute_error": 0.0015018642880022526,
+          "cosine_similarity": 0.9946067333221436,
+          "reference_l2_norm": 1.1703159809112549,
+          "output_l2_norm": 1.1595853567123413
+        },
+        {
+          "sample_index": 15,
+          "seed": 20260617,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.10660724228053231,
+          "l2_error": 0.12476415932178497,
+          "max_absolute_error": 0.007495414465665817,
+          "mean_absolute_error": 0.0015641937498003244,
+          "cosine_similarity": 0.9943145513534546,
+          "reference_l2_norm": 1.1703159809112549,
+          "output_l2_norm": 1.1576213836669922
+        },
+        {
+          "sample_index": 15,
+          "seed": 20260617,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.10972623185834182,
+          "l2_error": 0.1284143626689911,
+          "max_absolute_error": 0.007925746031105518,
+          "mean_absolute_error": 0.0016044427175074816,
+          "cosine_similarity": 0.9939652681350708,
+          "reference_l2_norm": 1.1703159809112549,
+          "output_l2_norm": 1.1601448059082031
+        },
+        {
+          "sample_index": 15,
+          "seed": 20260617,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.16644901990583583,
+          "l2_error": 0.19479794800281525,
+          "max_absolute_error": 0.01059390977025032,
+          "mean_absolute_error": 0.0024136339779943228,
+          "cosine_similarity": 0.9860516786575317,
+          "reference_l2_norm": 1.1703159809112549,
+          "output_l2_norm": 1.1562366485595703
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_6555444322",
+      "reference_output_l2_norm": 1.1703159809112549,
+      "elapsed_s": 0.5587208271026611
+    },
+    {
+      "sample_index": 16,
+      "seed": 20260618,
+      "router_logits_l2_norm": 63.0809440612793,
+      "top10_routed_weight_sum": 1.0000001192092896,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 12,
+          "routed_weight": 0.19085976481437683,
+          "required_levels": [
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "elapsed_s": 0.034651994705200195
+        },
+        {
+          "rank": 2,
+          "expert_id": 384,
+          "routed_weight": 0.18183235824108124,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024025440216064453
+        },
+        {
+          "rank": 3,
+          "expert_id": 254,
+          "routed_weight": 0.12661951780319214,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.02327132225036621
+        },
+        {
+          "rank": 4,
+          "expert_id": 100,
+          "routed_weight": 0.11572404950857162,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.019167661666870117
+        },
+        {
+          "rank": 5,
+          "expert_id": 240,
+          "routed_weight": 0.10000794380903244,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.013381719589233398
+        },
+        {
+          "rank": 6,
+          "expert_id": 74,
+          "routed_weight": 0.09014248102903366,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.0169370174407959
+        },
+        {
+          "rank": 7,
+          "expert_id": 166,
+          "routed_weight": 0.05561576411128044,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021336078643798828
+        },
+        {
+          "rank": 8,
+          "expert_id": 13,
+          "routed_weight": 0.050058431923389435,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021070480346679688
+        },
+        {
+          "rank": 9,
+          "expert_id": 510,
+          "routed_weight": 0.04833873361349106,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022017240524291992
+        },
+        {
+          "rank": 10,
+          "expert_id": 29,
+          "routed_weight": 0.040800999850034714,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02199411392211914
+        }
+      ],
+      "cached_precisions_before": [
+        7,
+        0,
+        6,
+        0,
+        0,
+        3,
+        0,
+        3,
+        0,
+        0
+      ],
+      "dynamic_precisions": [
+        7,
+        5,
+        6,
+        4,
+        4,
+        3,
+        3,
+        3,
+        3,
+        2
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 16,
+          "seed": 20260618,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.172413551438822,
+          "l2_error": 0.23131819069385529,
+          "max_absolute_error": 0.014856241643428802,
+          "mean_absolute_error": 0.002882785629481077,
+          "cosine_similarity": 0.985535740852356,
+          "reference_l2_norm": 1.3416473865509033,
+          "output_l2_norm": 1.2796692848205566
+        },
+        {
+          "sample_index": 16,
+          "seed": 20260618,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13243753373079023,
+          "l2_error": 0.1776844710111618,
+          "max_absolute_error": 0.011052519083023071,
+          "mean_absolute_error": 0.0022118897177278996,
+          "cosine_similarity": 0.9914008378982544,
+          "reference_l2_norm": 1.3416473865509033,
+          "output_l2_norm": 1.3027714490890503
+        },
+        {
+          "sample_index": 16,
+          "seed": 20260618,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.12880700336948048,
+          "l2_error": 0.17281357944011688,
+          "max_absolute_error": 0.0098625048995018,
+          "mean_absolute_error": 0.002152063651010394,
+          "cosine_similarity": 0.9917935132980347,
+          "reference_l2_norm": 1.3416473865509033,
+          "output_l2_norm": 1.3096084594726562
+        },
+        {
+          "sample_index": 16,
+          "seed": 20260618,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13073917678123895,
+          "l2_error": 0.17540587484836578,
+          "max_absolute_error": 0.010508023202419281,
+          "mean_absolute_error": 0.002178854774683714,
+          "cosine_similarity": 0.991573691368103,
+          "reference_l2_norm": 1.3416473865509033,
+          "output_l2_norm": 1.3066813945770264
+        },
+        {
+          "sample_index": 16,
+          "seed": 20260618,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.11404743359887917,
+          "l2_error": 0.15301144123077393,
+          "max_absolute_error": 0.009123198688030243,
+          "mean_absolute_error": 0.0018921629525721073,
+          "cosine_similarity": 0.9935750365257263,
+          "reference_l2_norm": 1.3416473865509033,
+          "output_l2_norm": 1.31414794921875
+        },
+        {
+          "sample_index": 16,
+          "seed": 20260618,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.14385058039616674,
+          "l2_error": 0.19299675524234772,
+          "max_absolute_error": 0.011939475312829018,
+          "mean_absolute_error": 0.002400756813585758,
+          "cosine_similarity": 0.989608645439148,
+          "reference_l2_norm": 1.3416473865509033,
+          "output_l2_norm": 1.3219705820083618
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_5554444333",
+      "reference_output_l2_norm": 1.3416473865509033,
+      "elapsed_s": 0.5589447021484375
+    },
+    {
+      "sample_index": 17,
+      "seed": 20260619,
+      "router_logits_l2_norm": 36.225894927978516,
+      "top10_routed_weight_sum": 1.0,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 469,
+          "routed_weight": 0.34328046441078186,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.030422449111938477
+        },
+        {
+          "rank": 2,
+          "expert_id": 371,
+          "routed_weight": 0.09590832889080048,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.024153947830200195
+        },
+        {
+          "rank": 3,
+          "expert_id": 122,
+          "routed_weight": 0.09427401423454285,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.023923158645629883
+        },
+        {
+          "rank": 4,
+          "expert_id": 261,
+          "routed_weight": 0.08018294721841812,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.01770496368408203
+        },
+        {
+          "rank": 5,
+          "expert_id": 142,
+          "routed_weight": 0.07341261208057404,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.012676000595092773
+        },
+        {
+          "rank": 6,
+          "expert_id": 145,
+          "routed_weight": 0.06541023403406143,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.01755380630493164
+        },
+        {
+          "rank": 7,
+          "expert_id": 467,
+          "routed_weight": 0.06481277197599411,
+          "required_levels": [
+            2,
+            3,
+            4,
+            6
+          ],
+          "elapsed_s": 0.02533864974975586
+        },
+        {
+          "rank": 8,
+          "expert_id": 368,
+          "routed_weight": 0.0641239657998085,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.02218317985534668
+        },
+        {
+          "rank": 9,
+          "expert_id": 442,
+          "routed_weight": 0.06410018354654312,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022034883499145508
+        },
+        {
+          "rank": 10,
+          "expert_id": 413,
+          "routed_weight": 0.054494429379701614,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021340131759643555
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        6,
+        0,
+        0,
+        3
+      ],
+      "dynamic_precisions": [
+        5,
+        4,
+        4,
+        4,
+        4,
+        4,
+        6,
+        3,
+        3,
+        3
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 17,
+          "seed": 20260619,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.18223525327758433,
+          "l2_error": 0.2075786292552948,
+          "max_absolute_error": 0.012973695993423462,
+          "mean_absolute_error": 0.002587568014860153,
+          "cosine_similarity": 0.9833710789680481,
+          "reference_l2_norm": 1.1390695571899414,
+          "output_l2_norm": 1.1029154062271118
+        },
+        {
+          "sample_index": 17,
+          "seed": 20260619,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13991823882850066,
+          "l2_error": 0.1593766063451767,
+          "max_absolute_error": 0.010486328043043613,
+          "mean_absolute_error": 0.0019967742264270782,
+          "cosine_similarity": 0.9901874661445618,
+          "reference_l2_norm": 1.1390695571899414,
+          "output_l2_norm": 1.1199653148651123
+        },
+        {
+          "sample_index": 17,
+          "seed": 20260619,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1346781775969712,
+          "l2_error": 0.15340781211853027,
+          "max_absolute_error": 0.009409451857209206,
+          "mean_absolute_error": 0.001914979424327612,
+          "cosine_similarity": 0.9909192323684692,
+          "reference_l2_norm": 1.1390695571899414,
+          "output_l2_norm": 1.1199772357940674
+        },
+        {
+          "sample_index": 17,
+          "seed": 20260619,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.13807518632770735,
+          "l2_error": 0.15727724134922028,
+          "max_absolute_error": 0.009525038301944733,
+          "mean_absolute_error": 0.001965877367183566,
+          "cosine_similarity": 0.9904955625534058,
+          "reference_l2_norm": 1.1390695571899414,
+          "output_l2_norm": 1.1144722700119019
+        },
+        {
+          "sample_index": 17,
+          "seed": 20260619,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1255104546128143,
+          "l2_error": 0.1429651379585266,
+          "max_absolute_error": 0.008694883435964584,
+          "mean_absolute_error": 0.0017700453754514456,
+          "cosine_similarity": 0.9922168850898743,
+          "reference_l2_norm": 1.1390695571899414,
+          "output_l2_norm": 1.1123079061508179
+        },
+        {
+          "sample_index": 17,
+          "seed": 20260619,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1513062693140746,
+          "l2_error": 0.17234836518764496,
+          "max_absolute_error": 0.01126432977616787,
+          "mean_absolute_error": 0.0021455835085362196,
+          "cosine_similarity": 0.9885061383247375,
+          "reference_l2_norm": 1.1390695571899414,
+          "output_l2_norm": 1.1189390420913696
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_5554444333",
+      "reference_output_l2_norm": 1.1390695571899414,
+      "elapsed_s": 0.5595846176147461
+    },
+    {
+      "sample_index": 18,
+      "seed": 20260620,
+      "router_logits_l2_norm": 70.36273956298828,
+      "top10_routed_weight_sum": 1.0,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 188,
+          "routed_weight": 0.32307034730911255,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.029048442840576172
+        },
+        {
+          "rank": 2,
+          "expert_id": 186,
+          "routed_weight": 0.1829056441783905,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.023734331130981445
+        },
+        {
+          "rank": 3,
+          "expert_id": 127,
+          "routed_weight": 0.08575309067964554,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.02279067039489746
+        },
+        {
+          "rank": 4,
+          "expert_id": 71,
+          "routed_weight": 0.07662543654441833,
+          "required_levels": [
+            4,
+            5
+          ],
+          "elapsed_s": 0.01854109764099121
+        },
+        {
+          "rank": 5,
+          "expert_id": 390,
+          "routed_weight": 0.0644659772515297,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.013025522232055664
+        },
+        {
+          "rank": 6,
+          "expert_id": 295,
+          "routed_weight": 0.06285781413316727,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.016539335250854492
+        },
+        {
+          "rank": 7,
+          "expert_id": 258,
+          "routed_weight": 0.06036585941910744,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.0216367244720459
+        },
+        {
+          "rank": 8,
+          "expert_id": 199,
+          "routed_weight": 0.05412482097744942,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.020856618881225586
+        },
+        {
+          "rank": 9,
+          "expert_id": 489,
+          "routed_weight": 0.0464317724108696,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021994590759277344
+        },
+        {
+          "rank": 10,
+          "expert_id": 3,
+          "routed_weight": 0.04339925944805145,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021924257278442383
+        }
+      ],
+      "cached_precisions_before": [
+        4,
+        0,
+        3,
+        0,
+        0,
+        4,
+        0,
+        3,
+        0,
+        0
+      ],
+      "dynamic_precisions": [
+        6,
+        5,
+        4,
+        5,
+        4,
+        4,
+        3,
+        3,
+        3,
+        3
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 18,
+          "seed": 20260620,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1376879150429304,
+          "l2_error": 0.15136344730854034,
+          "max_absolute_error": 0.01114010438323021,
+          "mean_absolute_error": 0.0018762412946671247,
+          "cosine_similarity": 0.990485668182373,
+          "reference_l2_norm": 1.0993226766586304,
+          "output_l2_norm": 1.0839732885360718
+        },
+        {
+          "sample_index": 18,
+          "seed": 20260620,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.11052323698215975,
+          "l2_error": 0.12150070071220398,
+          "max_absolute_error": 0.008614011108875275,
+          "mean_absolute_error": 0.0015051038935780525,
+          "cosine_similarity": 0.9938845634460449,
+          "reference_l2_norm": 1.0993226766586304,
+          "output_l2_norm": 1.0874261856079102
+        },
+        {
+          "sample_index": 18,
+          "seed": 20260620,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.1145500053297696,
+          "l2_error": 0.1259274184703827,
+          "max_absolute_error": 0.00859009474515915,
+          "mean_absolute_error": 0.0015618756879121065,
+          "cosine_similarity": 0.9934293627738953,
+          "reference_l2_norm": 1.0993226766586304,
+          "output_l2_norm": 1.086755633354187
+        },
+        {
+          "sample_index": 18,
+          "seed": 20260620,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.12067072791856936,
+          "l2_error": 0.132656067609787,
+          "max_absolute_error": 0.009371347725391388,
+          "mean_absolute_error": 0.001651762635447085,
+          "cosine_similarity": 0.9926949739456177,
+          "reference_l2_norm": 1.0993226766586304,
+          "output_l2_norm": 1.0888645648956299
+        },
+        {
+          "sample_index": 18,
+          "seed": 20260620,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.12109466961229966,
+          "l2_error": 0.13312211632728577,
+          "max_absolute_error": 0.00890292227268219,
+          "mean_absolute_error": 0.0016558383358642459,
+          "cosine_similarity": 0.9926460981369019,
+          "reference_l2_norm": 1.0993226766586304,
+          "output_l2_norm": 1.0877097845077515
+        },
+        {
+          "sample_index": 18,
+          "seed": 20260620,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.16422332244281937,
+          "l2_error": 0.18053442239761353,
+          "max_absolute_error": 0.010744552128016949,
+          "mean_absolute_error": 0.0022479589097201824,
+          "cosine_similarity": 0.9864233732223511,
+          "reference_l2_norm": 1.0993226766586304,
+          "output_l2_norm": 1.0836073160171509
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_6655443322",
+      "reference_output_l2_norm": 1.0993226766586304,
+      "elapsed_s": 0.5520820617675781
+    },
+    {
+      "sample_index": 19,
+      "seed": 20260621,
+      "router_logits_l2_norm": 39.30862045288086,
+      "top10_routed_weight_sum": 1.0,
+      "routed_experts": [
+        {
+          "rank": 1,
+          "expert_id": 106,
+          "routed_weight": 0.1884855479001999,
+          "required_levels": [
+            4,
+            5,
+            6,
+            8
+          ],
+          "elapsed_s": 0.03467512130737305
+        },
+        {
+          "rank": 2,
+          "expert_id": 40,
+          "routed_weight": 0.17591334879398346,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.02390742301940918
+        },
+        {
+          "rank": 3,
+          "expert_id": 11,
+          "routed_weight": 0.1476321667432785,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.023988008499145508
+        },
+        {
+          "rank": 4,
+          "expert_id": 498,
+          "routed_weight": 0.10698121786117554,
+          "required_levels": [
+            4,
+            5,
+            6
+          ],
+          "elapsed_s": 0.023026227951049805
+        },
+        {
+          "rank": 5,
+          "expert_id": 271,
+          "routed_weight": 0.10184875875711441,
+          "required_levels": [
+            4
+          ],
+          "elapsed_s": 0.013006210327148438
+        },
+        {
+          "rank": 6,
+          "expert_id": 417,
+          "routed_weight": 0.06936585158109665,
+          "required_levels": [
+            3,
+            4
+          ],
+          "elapsed_s": 0.017705202102661133
+        },
+        {
+          "rank": 7,
+          "expert_id": 13,
+          "routed_weight": 0.06252782046794891,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.020619630813598633
+        },
+        {
+          "rank": 8,
+          "expert_id": 120,
+          "routed_weight": 0.0498732328414917,
+          "required_levels": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "elapsed_s": 0.02576923370361328
+        },
+        {
+          "rank": 9,
+          "expert_id": 113,
+          "routed_weight": 0.049127187579870224,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.022109508514404297
+        },
+        {
+          "rank": 10,
+          "expert_id": 253,
+          "routed_weight": 0.04824482277035713,
+          "required_levels": [
+            2,
+            3,
+            4
+          ],
+          "elapsed_s": 0.021986722946166992
+        }
+      ],
+      "cached_precisions_before": [
+        0,
+        0,
+        0,
+        6,
+        0,
+        0,
+        3,
+        5,
+        0,
+        0
+      ],
+      "dynamic_precisions": [
+        5,
+        5,
+        4,
+        6,
+        4,
+        3,
+        3,
+        5,
+        2,
+        3
+      ],
+      "oracle_candidate_rows": [
+        {
+          "sample_index": 19,
+          "seed": 20260621,
+          "strategy": "rank_aware_8665432222",
+          "label": "Rank-aware 8665432222",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "8/6/6/5/4/3/2/2/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.18497490736321043,
+          "l2_error": 0.21749188005924225,
+          "max_absolute_error": 0.015713125467300415,
+          "mean_absolute_error": 0.0026929574087262154,
+          "cosine_similarity": 0.983173131942749,
+          "reference_l2_norm": 1.1757912635803223,
+          "output_l2_norm": 1.1218286752700806
+        },
+        {
+          "sample_index": 19,
+          "seed": 20260621,
+          "strategy": "rank_aware_6655443322",
+          "label": "Rank-aware 6655443322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/6/5/5/4/4/3/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.14562742592402586,
+          "l2_error": 0.17122745513916016,
+          "max_absolute_error": 0.011317715980112553,
+          "mean_absolute_error": 0.002121441764757037,
+          "cosine_similarity": 0.9895554184913635,
+          "reference_l2_norm": 1.1757912635803223,
+          "output_l2_norm": 1.1392005681991577
+        },
+        {
+          "sample_index": 19,
+          "seed": 20260621,
+          "strategy": "rank_aware_6555444322",
+          "label": "Rank-aware 6555444322",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "6/5/5/5/4/4/4/3/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.14263484041571683,
+          "l2_error": 0.16770879924297333,
+          "max_absolute_error": 0.010643212124705315,
+          "mean_absolute_error": 0.002084737876430154,
+          "cosine_similarity": 0.9899752140045166,
+          "reference_l2_norm": 1.1757912635803223,
+          "output_l2_norm": 1.1406062841415405
+        },
+        {
+          "sample_index": 19,
+          "seed": 20260621,
+          "strategy": "rank_aware_5555444422",
+          "label": "Rank-aware 5555444422",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/5/4/4/4/4/2/2",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.14279362425293401,
+          "l2_error": 0.16789549589157104,
+          "max_absolute_error": 0.01077895238995552,
+          "mean_absolute_error": 0.0020917141810059547,
+          "cosine_similarity": 0.9899502396583557,
+          "reference_l2_norm": 1.1757912635803223,
+          "output_l2_norm": 1.1407109498977661
+        },
+        {
+          "sample_index": 19,
+          "seed": 20260621,
+          "strategy": "rank_aware_5554444333",
+          "label": "Rank-aware 5554444333",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "5/5/5/4/4/4/4/3/3/3",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.12272886772030157,
+          "l2_error": 0.14430353045463562,
+          "max_absolute_error": 0.00817179400473833,
+          "mean_absolute_error": 0.0018057454144582152,
+          "cosine_similarity": 0.9925042390823364,
+          "reference_l2_norm": 1.1757912635803223,
+          "output_l2_norm": 1.1537317037582397
+        },
+        {
+          "sample_index": 19,
+          "seed": 20260621,
+          "strategy": "uniform_q4",
+          "label": "All 4-bit",
+          "allocation_level": "routed_rank",
+          "precision_by_rank": "4/4/4/4/4/4/4/4/4/4",
+          "selected_strategy": "",
+          "target_bits": 40,
+          "target_average_bits": 4.0,
+          "relative_l2_error": 0.14852863690393392,
+          "l2_error": 0.17463867366313934,
+          "max_absolute_error": 0.009988058358430862,
+          "mean_absolute_error": 0.0021903207525610924,
+          "cosine_similarity": 0.9889744520187378,
+          "reference_l2_norm": 1.1757912635803223,
+          "output_l2_norm": 1.1493560075759888
+        }
+      ],
+      "oracle_selected_strategy": "rank_aware_5554444333",
+      "reference_output_l2_norm": 1.1757912635803223,
+      "elapsed_s": 0.5686671733856201
+    }
+  ],
+  "elapsed_s": 12.268118381500244
+}

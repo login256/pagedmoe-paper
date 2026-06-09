@@ -1,0 +1,4 @@
+strategy,label,allocation_level,precision_by_rank,sample_count,mean_relative_l2_error,std_relative_l2_error,median_relative_l2_error,min_relative_l2_error,max_relative_l2_error,mean_cosine_similarity,mean_target_bits,mean_target_average_bits
+uniform_q4,uniform,routed_rank,4/4/4/4/4/4/4/4/4/4,100,0.1529890706991164,0.02859517908486848,0.14636804701369974,0.10633118885633074,0.2722731178210343,0.9881352359056472,40.0,4.0
+oracle_q4,Candidate Oracle,per_sample_oracle,per-sample best,100,0.10652184738770366,0.038890174426943355,0.11403999887869215,0.009077025867078934,0.17500684889083223,0.9936186730861664,40.0,4.0
+pagedmoe_dynamic,Routing-Weight Aware,runtime_marginal_gain,per-sample marginal-gain,100,0.1029890800825693,0.03876698240795009,0.11267841546661264,0.008148550648966387,0.19205634632508117,0.9940466678142548,40.0,4.0

@@ -1,0 +1,155 @@
+{
+  "model_root": "/mnt/data/Qwen3.5-397B-A17B",
+  "llama_cpp_library": "/home/lyt/llama.cpp/build/bin/libggml-base.so.0.13.1",
+  "layer_index": 0,
+  "expert_id": 0,
+  "hidden_state": {
+    "description": "one deterministic synthetic BF16 hidden state sampled from N(0, 1)",
+    "seed": 20260602,
+    "size": 4096
+  },
+  "importance_matrix": {
+    "description": "per-input weights derived from the measured activation: hidden_state^2 for gate/up and quantized-path intermediate^2 for down"
+  },
+  "expert": {
+    "architecture": "SiLU(gate_proj(x)) * up_proj(x), followed by down_proj",
+    "hidden_size": 4096,
+    "parameter_count": 12582912,
+    "original_weight_bytes": 25165824
+  },
+  "tensor_sources": {
+    "gate_up_tensor": "model.language_model.layers.0.mlp.experts.gate_up_proj",
+    "gate_up_shard": "/mnt/data/Qwen3.5-397B-A17B/model.safetensors-00016-of-00094.safetensors",
+    "down_tensor": "model.language_model.layers.0.mlp.experts.down_proj",
+    "down_shard": "/mnt/data/Qwen3.5-397B-A17B/model.safetensors-00068-of-00094.safetensors"
+  },
+  "quantization": {
+    "description": "llama.cpp ggml_quantize_chunk followed by the matching dequantize_row_iq* function; each matrix is processed and multiplied before the next matrix",
+    "selected_types": [
+      {
+        "nominal_bits": 1,
+        "name": "IQ1_S",
+        "ggml_type": 19,
+        "dequantize_suffix": "iq1_s"
+      },
+      {
+        "nominal_bits": 1,
+        "name": "IQ1_M",
+        "ggml_type": 29,
+        "dequantize_suffix": "iq1_m"
+      },
+      {
+        "nominal_bits": 2,
+        "name": "IQ2_XXS",
+        "ggml_type": 16,
+        "dequantize_suffix": "iq2_xxs"
+      },
+      {
+        "nominal_bits": 2,
+        "name": "IQ2_XS",
+        "ggml_type": 17,
+        "dequantize_suffix": "iq2_xs"
+      },
+      {
+        "nominal_bits": 2,
+        "name": "IQ2_S",
+        "ggml_type": 22,
+        "dequantize_suffix": "iq2_s"
+      },
+      {
+        "nominal_bits": 3,
+        "name": "IQ3_XXS",
+        "ggml_type": 18,
+        "dequantize_suffix": "iq3_xxs"
+      },
+      {
+        "nominal_bits": 3,
+        "name": "IQ3_S",
+        "ggml_type": 21,
+        "dequantize_suffix": "iq3_s"
+      },
+      {
+        "nominal_bits": 4,
+        "name": "IQ4_XS",
+        "ggml_type": 23,
+        "dequantize_suffix": "iq4_xs"
+      },
+      {
+        "nominal_bits": 4,
+        "name": "IQ4_NL",
+        "ggml_type": 20,
+        "dequantize_suffix": "iq4_nl"
+      }
+    ],
+    "unavailable_types": {
+      "5": "llama.cpp has no IQ5 primitive format",
+      "6": "llama.cpp has no IQ6 primitive format",
+      "7": "llama.cpp has no IQ7 primitive format",
+      "8": "llama.cpp has no IQ8 primitive format"
+    },
+    "workers": 56,
+    "tasks_per_worker": 4,
+    "cpu_affinity": [
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111
+    ]
+  },
+  "reference_output_l2_norm": 0.10296256095170975,
+  "elapsed_seconds": 34.97271203994751,
+  "max_rss_mib": 563.109375,
+  "csv": "/home/lyt/pagedmoe/paper/figure/bit-error/qwen35_expert_iq_relative_error.csv"
+}

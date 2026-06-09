@@ -1,0 +1,19 @@
+{
+  "config": {
+    "gptq_root": "/mnt/data/Qwen3.5-397B-A17B-GPTQ-Int4",
+    "layer_index": 30,
+    "model_root": "/mnt/data/Qwen3.5-397B-A17B",
+    "torch_threads": 1
+  },
+  "elapsed_seconds": 49.2256977558136,
+  "expert_limit": 512,
+  "expert_offset": 0,
+  "experts_completed": 512,
+  "method": "gptq_int4",
+  "output_files": {
+    "experts": "/home/lyt/pagedmoe/paper/figure/ktensor-lite-readout-error/qwen35_layer30_ktensor_lite_weight_error_experts.csv",
+    "metadata": "/home/lyt/pagedmoe/paper/figure/ktensor-lite-readout-error/qwen35_layer30_ktensor_lite_weight_error.json",
+    "summary": "/home/lyt/pagedmoe/paper/figure/ktensor-lite-readout-error/qwen35_layer30_ktensor_lite_weight_error_summary.csv",
+    "tensors": "/home/lyt/pagedmoe/paper/figure/ktensor-lite-readout-error/qwen35_layer30_ktensor_lite_weight_error_tensors.csv"
+  }
+}

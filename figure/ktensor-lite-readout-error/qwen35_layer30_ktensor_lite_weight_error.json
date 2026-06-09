@@ -1,0 +1,39 @@
+{
+  "config": {
+    "bits": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "ktensor_lib_dir": "/home/lyt/pagedmoe/src/target/release",
+    "layer_index": 30,
+    "model_root": "/mnt/data/Qwen3.5-397B-A17B",
+    "readout_source": "storage",
+    "sampling_rate": 0.1,
+    "storage_root": "/mnt/test/qwen35_397b_runtime_sharded_rust",
+    "torch_threads": 1
+  },
+  "description": "Compare ktensor-lite direct quantization with 8-bit progressive readout.\n\nThe metric is weight-space relative L2 error against the original BF16 model\nweights:\n\n    ||decoded_weight - original_weight||_2 / ||original_weight||_2\n\nBy default the progressive 8-bit object is read from the PagedMoE runtime\nstorage, which matches the deployed scattered-lite readout path. Use\n``--readout-source reencode`` to create the 8-bit ktensor-lite object directly\nfrom the original weights inside this script.\n",
+  "elapsed_seconds": 744.3171012401581,
+  "expert_limit": 512,
+  "expert_offset": 0,
+  "experts_completed_before_run": 0,
+  "experts_completed_this_run": 512,
+  "experts_completed_total": 512,
+  "experts_pending_at_start": 512,
+  "experts_requested": 512,
+  "finished_unix": 1780983083.4961884,
+  "output_files": {
+    "experts": "/home/lyt/pagedmoe/paper/figure/ktensor-lite-readout-error/qwen35_layer30_ktensor_lite_weight_error_experts.csv",
+    "metadata": "/home/lyt/pagedmoe/paper/figure/ktensor-lite-readout-error/qwen35_layer30_ktensor_lite_weight_error.json",
+    "summary": "/home/lyt/pagedmoe/paper/figure/ktensor-lite-readout-error/qwen35_layer30_ktensor_lite_weight_error_summary.csv",
+    "tensors": "/home/lyt/pagedmoe/paper/figure/ktensor-lite-readout-error/qwen35_layer30_ktensor_lite_weight_error_tensors.csv"
+  },
+  "started_unix": 1780982339.1790671,
+  "workers": 8
+}

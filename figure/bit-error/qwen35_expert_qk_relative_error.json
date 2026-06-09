@@ -1,0 +1,74 @@
+{
+  "model_root": "/mnt/data/Qwen3.5-397B-A17B",
+  "llama_cpp_library": "/home/lyt/llama.cpp/build/bin/libggml-base.so.0.13.1",
+  "layer_index": 0,
+  "expert_id": 0,
+  "hidden_state": {
+    "description": "one deterministic synthetic BF16 hidden state sampled from N(0, 1)",
+    "seed": 20260602,
+    "size": 4096
+  },
+  "expert": {
+    "architecture": "SiLU(gate_proj(x)) * up_proj(x), followed by down_proj",
+    "hidden_size": 4096,
+    "moe_intermediate_size": 1024,
+    "parameter_count": 12582912,
+    "original_weight_bytes": 25165824
+  },
+  "tensor_sources": {
+    "gate_up_tensor": "model.language_model.layers.0.mlp.experts.gate_up_proj",
+    "gate_up_shard": "/mnt/data/Qwen3.5-397B-A17B/model.safetensors-00016-of-00094.safetensors",
+    "down_tensor": "model.language_model.layers.0.mlp.experts.down_proj",
+    "down_shard": "/mnt/data/Qwen3.5-397B-A17B/model.safetensors-00068-of-00094.safetensors"
+  },
+  "quantization": {
+    "description": "llama.cpp quantize_row_qx_K_ref followed by dequantize_row_qx_K; each matrix is processed and multiplied before the next matrix",
+    "qk_block_elements": 256,
+    "selected_types": [
+      {
+        "nominal_bits": 2,
+        "name": "Q2_K",
+        "block_bytes": 84,
+        "note": ""
+      },
+      {
+        "nominal_bits": 3,
+        "name": "Q3_K",
+        "block_bytes": 110,
+        "note": ""
+      },
+      {
+        "nominal_bits": 4,
+        "name": "Q4_K",
+        "block_bytes": 144,
+        "note": ""
+      },
+      {
+        "nominal_bits": 5,
+        "name": "Q5_K",
+        "block_bytes": 176,
+        "note": ""
+      },
+      {
+        "nominal_bits": 6,
+        "name": "Q6_K",
+        "block_bytes": 210,
+        "note": ""
+      },
+      {
+        "nominal_bits": 8,
+        "name": "Q8_K",
+        "block_bytes": 292,
+        "note": "llama.cpp internal intermediate/dot-product format"
+      }
+    ],
+    "unavailable_types": {
+      "1": "llama.cpp has no Q1_K format",
+      "7": "llama.cpp has no Q7_K format"
+    }
+  },
+  "reference_output_l2_norm": 0.10296256095170975,
+  "elapsed_seconds": 3.025970220565796,
+  "max_rss_mib": 562.59765625,
+  "csv": "/home/lyt/pagedmoe/paper/figure/bit-error/qwen35_expert_qk_relative_error.csv"
+}
