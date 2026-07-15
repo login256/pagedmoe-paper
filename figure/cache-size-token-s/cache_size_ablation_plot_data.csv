@@ -1,0 +1,85 @@
+figure,series,cache_size_gib,decode_token_per_s,source
+end-to-end,ik_llama.cpp Q4_0,16,1.2100,paper/figure/cache-size-token-s/plot_cache_size_token_s.py:manual_values
+end-to-end,ik_llama.cpp Q4_0,32,1.5000,paper/figure/cache-size-token-s/plot_cache_size_token_s.py:manual_values
+end-to-end,ik_llama.cpp Q4_0,48,1.9900,paper/figure/cache-size-token-s/plot_cache_size_token_s.py:manual_values
+end-to-end,ik_llama.cpp Q4_0,64,2.3200,paper/figure/cache-size-token-s/plot_cache_size_token_s.py:manual_values
+end-to-end,Uniform 4-bit,8,3.2432,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Uniform 4-bit,16,4.0000,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Uniform 4-bit,24,4.4860,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Uniform 4-bit,32,5.1064,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Uniform 4-bit,40,5.5172,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Uniform 4-bit,48,6.0000,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Uniform 4-bit,56,6.4000,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Uniform 4-bit,64,6.7606,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Dynamic Avg 4-bit,8,3.4532,src/target/bench/kt_pagedmoe_dynamic_static_cache8-64_perf_hitrate_summary.csv
+end-to-end,Dynamic Avg 4-bit,16,4.0678,src/target/bench/kt_pagedmoe_dynamic_static_cache8-64_perf_hitrate_summary.csv
+end-to-end,Dynamic Avg 4-bit,24,4.5283,src/target/bench/kt_pagedmoe_dynamic_static_cache8-64_perf_hitrate_summary.csv
+end-to-end,Dynamic Avg 4-bit,32,4.9485,src/target/bench/kt_pagedmoe_dynamic_static_cache8-64_perf_hitrate_summary.csv
+end-to-end,Dynamic Avg 4-bit,40,5.4545,src/target/bench/kt_pagedmoe_dynamic_static_cache8-64_perf_hitrate_summary.csv
+end-to-end,Dynamic Avg 4-bit,48,5.8537,src/target/bench/kt_pagedmoe_dynamic_static_cache8-64_perf_hitrate_summary.csv
+end-to-end,Dynamic Avg 4-bit,56,6.0000,src/target/bench/kt_pagedmoe_dynamic_static_cache8-64_perf_hitrate_summary.csv
+end-to-end,Dynamic Avg 4-bit,64,6.5753,src/target/bench/kt_pagedmoe_dynamic_static_cache8-64_perf_hitrate_summary.csv
+end-to-end,Dynamic Avg 2.5-bit,8,5.1064,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Dynamic Avg 2.5-bit,16,6.0000,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Dynamic Avg 2.5-bit,24,6.9565,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Dynamic Avg 2.5-bit,32,7.5000,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Dynamic Avg 2.5-bit,40,8.2759,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Dynamic Avg 2.5-bit,48,8.7273,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Dynamic Avg 2.5-bit,56,9.0566,logs/qwen35_breakdown_combined_20260701/summary.md
+end-to-end,Dynamic Avg 2.5-bit,64,9.2308,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Uniform 4-bit,8,3.2432,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Uniform 4-bit,16,4.0000,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Uniform 4-bit,24,4.4860,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Uniform 4-bit,32,5.1064,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Uniform 4-bit,40,5.5172,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Uniform 4-bit,48,6.0000,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Uniform 4-bit,56,6.4000,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Uniform 4-bit,64,6.7606,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit w/o Prefix Reuse,8,4.2857,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit w/o Prefix Reuse,16,4.7525,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit w/o Prefix Reuse,24,5.2174,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit w/o Prefix Reuse,32,5.6471,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit w/o Prefix Reuse,40,6.0000,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit w/o Prefix Reuse,48,6.4000,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit w/o Prefix Reuse,56,6.6667,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit w/o Prefix Reuse,64,6.9565,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit,8,5.1064,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit,16,6.0000,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit,24,6.9565,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit,32,7.5000,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit,40,8.2759,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit,48,8.7273,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit,56,9.0566,logs/qwen35_breakdown_combined_20260701/summary.md
+prefix-reuse,Dynamic Avg 2.5-bit,64,9.2308,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Uniform 4-bit,8,3.2432,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Uniform 4-bit,16,4.0000,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Uniform 4-bit,24,4.4860,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Uniform 4-bit,32,5.1064,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Uniform 4-bit,40,5.5172,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Uniform 4-bit,48,6.0000,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Uniform 4-bit,56,6.4000,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Uniform 4-bit,64,6.7606,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Uniform 4-bit w/ mmap fallback,8,1.0860,logs/qwen35_mmap_static4_c2p5l25_8to64_20260630_182406/summary.raw.csv
+mmap-fallback,Uniform 4-bit w/ mmap fallback,16,1.6961,logs/qwen35_mmap_static4_c2p5l25_8to64_20260630_182406/summary.raw.csv
+mmap-fallback,Uniform 4-bit w/ mmap fallback,24,2.3762,logs/qwen35_mmap_static4_c2p5l25_8to64_20260630_182406/summary.raw.csv
+mmap-fallback,Uniform 4-bit w/ mmap fallback,32,3.1373,logs/qwen35_mmap_static4_c2p5l25_8to64_20260630_182406/summary.raw.csv
+mmap-fallback,Uniform 4-bit w/ mmap fallback,40,4.1026,logs/qwen35_mmap_static4_c2p5l25_8to64_20260630_182406/summary.raw.csv
+mmap-fallback,Uniform 4-bit w/ mmap fallback,48,4.6602,logs/qwen35_mmap_static4_c2p5l25_8to64_20260630_182406/summary.raw.csv
+mmap-fallback,Uniform 4-bit w/ mmap fallback,56,4.6154,logs/qwen35_mmap_static4_c2p5l25_8to64_20260630_182406/summary.raw.csv
+mmap-fallback,Uniform 4-bit w/ mmap fallback,64,4.4860,logs/qwen35_mmap_static4_c2p5l25_8to64_20260630_182406/summary.raw.csv
+mmap-fallback,Dynamic Avg 2.5-bit,8,5.1064,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit,16,6.0000,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit,24,6.9565,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit,32,7.5000,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit,40,8.2759,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit,48,8.7273,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit,56,9.0566,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit,64,9.2308,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit w/ mmap fallback,8,1.7391,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit w/ mmap fallback,16,2.3881,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit w/ mmap fallback,24,2.6087,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit w/ mmap fallback,32,2.8402,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit w/ mmap fallback,40,3.2000,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit w/ mmap fallback,48,3.5821,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit w/ mmap fallback,56,3.9024,logs/qwen35_breakdown_combined_20260701/summary.md
+mmap-fallback,Dynamic Avg 2.5-bit w/ mmap fallback,64,4.5283,logs/qwen35_breakdown_combined_20260701/summary.md

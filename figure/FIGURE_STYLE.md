@@ -224,6 +224,77 @@ Rules:
 - Naive/static methods should use gray dotted line.
 - Use markers for small figures where lines may be hard to distinguish.
 
+### PagedMoE precision/cache line plots
+
+The following visual language is mandatory for PagedMoE throughput, cache-size,
+cache-hit-rate, prefix-reuse, and mmap-fallback line plots. It overrides the
+generic method-oriented line and marker mappings above.
+
+Color and marker encode the precision policy:
+
+| Precision policy | Color | Marker |
+|---|---:|---:|
+| External mmap Q4_0 baseline | `#000000` | `^` triangle |
+| Uniform 4-bit | `#0072B2` | `s` square |
+| Dynamic Avg 4-bit | `#009E73` | `D` diamond |
+| Dynamic Avg 2.5-bit | `#D55E00` | `o` circle |
+
+Line style encodes the execution or cache path:
+
+| Execution path | Line style |
+|---|---:|
+| Complete PagedMoE | `-` solid |
+| Without prefix reuse | `--` dashed |
+| With mmap fallback | `:` dotted |
+| External mmap Q4_0 baseline | `-.` dash-dot |
+
+Required combined styles:
+
+| Series | Required style |
+|---|---|
+| mmap Q4_0 | black `-.` with hollow `^` |
+| Uniform 4-bit | deep blue `-` with hollow `s` |
+| Dynamic Avg 4-bit | teal `-` with hollow `D` |
+| Dynamic Avg 4-bit w/o Prefix Reuse | teal `--` with hollow `D` |
+| Dynamic Avg 2.5-bit | orange `-` with hollow `o` |
+| Dynamic Avg 2.5-bit w/o Prefix Reuse | orange `--` with hollow `o` |
+| Uniform 4-bit w/ mmap fallback | deep blue `:` with hollow `s` |
+| Dynamic Avg 2.5-bit w/ mmap fallback | orange `:` with hollow `o` |
+
+Rules:
+
+- Keep a policy's color and marker unchanged across ablations. Only the line
+  style changes with the execution or cache path.
+- All markers must be hollow: use `markerfacecolor="#FFFFFF"` and set
+  `markeredgecolor` to the curve color.
+- Reserve black dash-dot triangles for the external mmap Q4_0 baseline. An
+  internal mmap-fallback ablation keeps its policy color and marker.
+- Do not use an `x` marker for w/o-prefix curves; use the base policy marker
+  with a dashed line.
+
+Reference constants:
+
+```python
+PAGEDMOE_POLICY_STYLE = {
+    "mmap_q4_0": {"color": "#000000", "marker": "^"},
+    "uniform_4bit": {"color": "#0072B2", "marker": "s"},
+    "dynamic_avg4": {"color": "#009E73", "marker": "D"},
+    "dynamic_avg2p5": {"color": "#D55E00", "marker": "o"},
+}
+
+PAGEDMOE_PATH_LINESTYLE = {
+    "complete": "-",
+    "without_prefix_reuse": "--",
+    "with_mmap_fallback": ":",
+    "external_mmap_q4_0": "-.",
+}
+
+HOLLOW_MARKER_STYLE = {
+    "markerfacecolor": "#FFFFFF",
+    "markeredgewidth": 0.75,
+}
+```
+
 ---
 
 ## 8. Bar Charts
@@ -639,6 +710,26 @@ MARKERS = {
     "naive": "x",
 }
 
+# Mandatory for PagedMoE precision/cache line plots.
+PAGEDMOE_POLICY_STYLE = {
+    "mmap_q4_0": {"color": "#000000", "marker": "^"},
+    "uniform_4bit": {"color": "#0072B2", "marker": "s"},
+    "dynamic_avg4": {"color": "#009E73", "marker": "D"},
+    "dynamic_avg2p5": {"color": "#D55E00", "marker": "o"},
+}
+
+PAGEDMOE_PATH_LINESTYLE = {
+    "complete": "-",
+    "without_prefix_reuse": "--",
+    "with_mmap_fallback": ":",
+    "external_mmap_q4_0": "-.",
+}
+
+HOLLOW_MARKER_STYLE = {
+    "markerfacecolor": "#FFFFFF",
+    "markeredgewidth": 0.75,
+}
+
 HATCHES = {
     "ours": "",
     "strong_baseline": "//",
@@ -706,4 +797,6 @@ When asking Codex or another coding agent to draw figures, include:
 Please follow FIGURE_STYLE.md and import colors/styles from plot_style.py.
 Do not introduce new colors unless necessary.
 Use semantic colors consistently across all figures.
+For PagedMoE precision/cache line plots, color and marker encode precision
+policy, line style encodes execution path, and every marker is hollow.
 ```

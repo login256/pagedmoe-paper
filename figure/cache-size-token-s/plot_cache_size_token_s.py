@@ -20,8 +20,8 @@ DEFAULT_SUMMARY = (
 
 PALETTE = {
     "ours": "#D55E00",
-    "strong_baseline": "#0072B2",
-    "static": "#999999",
+    "strong_baseline": "#009E73",
+    "static": "#0072B2",
     "black": "#000000",
     "light_gray": "#DDDDDD",
     "white": "#FFFFFF",
@@ -30,7 +30,7 @@ PALETTE = {
 SERIES = [
     {
         "case": "ik_llama.cpp-mmap-Q4_0",
-        "label": "ik_llama.cpp-mmap-Q4_0",
+        "label": "ik_llama.cpp Q4_0",
         "color": PALETTE["black"],
         "linestyle": "-.",
         "marker": "^",
@@ -40,22 +40,22 @@ SERIES = [
         "case": "all4",
         "label": "Uniform 4bit",
         "color": PALETTE["static"],
-        "linestyle": ":",
+        "linestyle": "-",
         "marker": "s",
     },
     {
         "case": "c4l40",
         "label": "Dynamic Avg 4bit",
         "color": PALETTE["strong_baseline"],
-        "linestyle": "--",
-        "marker": "o",
+        "linestyle": "-",
+        "marker": "D",
     },
     {
         "case": "c2.5l25",
         "label": "Dynamic Avg 2.5bit",
         "color": PALETTE["ours"],
         "linestyle": "-",
-        "marker": "D",
+        "marker": "o",
     },
 ]
 

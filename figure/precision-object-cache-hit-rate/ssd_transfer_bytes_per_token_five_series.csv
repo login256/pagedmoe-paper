@@ -1,0 +1,41 @@
+series,cache_gib,hit_rate,miss_rate,avg_bits,moe_layers,experts_per_token,bitplanes_per_token,bitplane_bytes,ssd_transfer_bytes_per_token,ssd_transfer_gib_per_token,source
+Uniform 4-bit,8,0.43540000,0.56460000,4,60,10,2400,1572864,2131293634.560,1.98492187,precision_object_cache_hit_rate_five_series.csv
+Uniform 4-bit,16,0.54150000,0.45850000,4,60,10,2400,1572864,1730779545.600,1.61191406,precision_object_cache_hit_rate_five_series.csv
+Uniform 4-bit,24,0.61160000,0.38840000,4,60,10,2400,1572864,1466160906.240,1.36546875,precision_object_cache_hit_rate_five_series.csv
+Uniform 4-bit,32,0.68070000,0.31930000,4,60,10,2400,1572864,1205317140.480,1.12253906,precision_object_cache_hit_rate_five_series.csv
+Uniform 4-bit,40,0.72570000,0.27430000,4,60,10,2400,1572864,1035447828.480,0.96433594,precision_object_cache_hit_rate_five_series.csv
+Uniform 4-bit,48,0.76630000,0.23370000,4,60,10,2400,1572864,882187960.320,0.82160156,precision_object_cache_hit_rate_five_series.csv
+Uniform 4-bit,56,0.79830000,0.20170000,4,60,10,2400,1572864,761392005.120,0.70910156,precision_object_cache_hit_rate_five_series.csv
+Uniform 4-bit,64,0.82410000,0.17590000,4,60,10,2400,1572864,664000266.240,0.61839844,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit,8,0.42490000,0.57510000,4,60,10,2400,1572864,2170929807.360,2.02183594,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit,16,0.53070000,0.46930000,4,60,10,2400,1572864,1771548180.480,1.64988281,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit,24,0.59980000,0.40020000,4,60,10,2400,1572864,1510704414.720,1.40695313,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit,32,0.64920000,0.35080000,4,60,10,2400,1572864,1324225658.880,1.23328125,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit,40,0.70080000,0.29920000,4,60,10,2400,1572864,1129442181.120,1.05187500,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit,48,0.73980000,0.26020000,4,60,10,2400,1572864,982222110.720,0.91476563,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit,56,0.77830000,0.22170000,4,60,10,2400,1572864,836889477.120,0.77941406,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit,64,0.81090000,0.18910000,4,60,10,2400,1572864,713828597.760,0.66480469,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit w/o Prefix Reuse,8,0.27714984,0.72285016,4,60,10,2400,1572864,2728667985.740,2.54127009,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit w/o Prefix Reuse,16,0.35320033,0.64679967,4,60,10,2400,1572864,2441586998.772,2.27390509,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit w/o Prefix Reuse,24,0.40091748,0.59908252,4,60,10,2400,1572864,2261460788.969,2.10614948,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit w/o Prefix Reuse,32,0.43883279,0.56116721,4,60,10,2400,1572864,2118335286.215,1.97285347,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit w/o Prefix Reuse,40,0.47666667,0.52333333,4,60,10,2400,1572864,1975517171.417,1.83984374,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit w/o Prefix Reuse,48,0.50720684,0.49279316,4,60,10,2400,1572864,1860231889.945,1.73247595,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit w/o Prefix Reuse,56,0.53340391,0.46659609,4,60,10,2400,1572864,1761341262.004,1.64037688,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 4-bit w/o Prefix Reuse,64,0.56410695,0.43589305,4,60,10,2400,1572864,1645441166.868,1.53243650,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit,8,0.49260000,0.50740000,2.5,60,10,1500,1572864,1197106790.400,1.11489258,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit,16,0.60170000,0.39830000,2.5,60,10,1500,1572864,939707596.800,0.87517090,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit,24,0.68500000,0.31500000,2.5,60,10,1500,1572864,743178240.000,0.69213867,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit,32,0.73920000,0.26080000,2.5,60,10,1500,1572864,615304396.800,0.57304688,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit,40,0.78740000,0.21260000,2.5,60,10,1500,1572864,501586329.600,0.46713867,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit,48,0.82450000,0.17550000,2.5,60,10,1500,1572864,414056448.000,0.38562012,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit,56,0.85300000,0.14700000,2.5,60,10,1500,1572864,346816512.000,0.32299805,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit,64,0.87520000,0.12480000,2.5,60,10,1500,1572864,294440140.800,0.27421875,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit w/o Prefix Reuse,8,0.33120000,0.66880000,2.5,60,10,1500,1572864,1577897164.800,1.46953125,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit w/o Prefix Reuse,16,0.40990000,0.59010000,2.5,60,10,1500,1572864,1392220569.600,1.29660645,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit w/o Prefix Reuse,24,0.47940000,0.52060000,2.5,60,10,1500,1572864,1228249497.600,1.14389648,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit w/o Prefix Reuse,32,0.53290000,0.46710000,2.5,60,10,1500,1572864,1102027161.600,1.02634277,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit w/o Prefix Reuse,40,0.57040000,0.42960000,2.5,60,10,1500,1572864,1013553561.600,0.94394531,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit w/o Prefix Reuse,48,0.60400000,0.39600000,2.5,60,10,1500,1572864,934281216.000,0.87011719,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit w/o Prefix Reuse,56,0.63870000,0.36130000,2.5,60,10,1500,1572864,852413644.800,0.79387207,precision_object_cache_hit_rate_five_series.csv
+Dynamic Avg 2.5-bit w/o Prefix Reuse,64,0.66800000,0.33200000,2.5,60,10,1500,1572864,783286272.000,0.72949219,precision_object_cache_hit_rate_five_series.csv
