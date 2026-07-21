@@ -46,6 +46,9 @@ COMPONENTS = (
 @dataclass(frozen=True)
 class TimingRow:
     cache_size_gib: int
+    full_epoch_hit_rate: float
+    sample_hit_rate: float
+    sample_tokens: int
     total_ms: float
     ssd_only_ms: float
     compute_only_ms: float
@@ -89,6 +92,9 @@ def read_data(path: Path) -> list[TimingRow]:
             try:
                 row = TimingRow(
                     cache_size_gib=int(raw["cache_size_gib"]),
+                    full_epoch_hit_rate=float(raw["full_epoch_hit_rate"]),
+                    sample_hit_rate=float(raw["sample_hit_rate"]),
+                    sample_tokens=int(raw["sample_tokens"]),
                     total_ms=float(raw["total_ms_per_token"]),
                     ssd_only_ms=float(raw["ssd_only_ms_per_token"]),
                     compute_only_ms=float(raw["compute_only_ms_per_token"]),
@@ -109,14 +115,21 @@ def read_data(path: Path) -> list[TimingRow]:
         )
 
     for row in rows:
+        hit_rates = (row.full_epoch_hit_rate, row.sample_hit_rate)
+        if any(
+            not math.isfinite(value) or not 0.0 <= value <= 1.0 for value in hit_rates
+        ):
+            raise ValueError(f"invalid hit rate at {row.cache_size_gib} GiB")
+        if row.sample_tokens <= 0:
+            raise ValueError(f"non-positive sample size at {row.cache_size_gib} GiB")
         components = (
             row.ssd_only_ms,
             row.compute_only_ms,
             row.ssd_compute_overlap_ms,
             row.other_ms,
         )
-        if any(value < 0.0 for value in components):
-            raise ValueError(f"negative timing component at {row.cache_size_gib} GiB")
+        if any(not math.isfinite(value) or value < 0.0 for value in components):
+            raise ValueError(f"invalid timing component at {row.cache_size_gib} GiB")
         if not math.isclose(sum(components), row.total_ms, rel_tol=0.0, abs_tol=1e-6):
             raise ValueError(
                 f"timing components do not sum to total at {row.cache_size_gib} GiB"
