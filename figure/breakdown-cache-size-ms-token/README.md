@@ -8,10 +8,12 @@ are measured over decode model tokens 120 through 129, with token 130 providing
 the right boundary. Every stacked bar is measured in `ms/token` and contains four
 mutually exclusive worker-activity buckets:
 
-- `SSD only`: read tasks active without an expert compute task.
-- `Compute only`: expert compute tasks active without a read task.
-- `SSD + compute overlap`: read and expert compute tasks active concurrently.
-- `Other`: neither a read task nor an expert compute task active.
+- `Unhidden SSD I/O`: read tasks active without an expert compute task.
+- `Overlapped I/O and computation`: read and expert compute tasks active
+  concurrently.
+- `Expert computation only`: expert compute tasks active without a read task.
+- `Other model and runtime work`: neither a read task nor an expert compute task
+  active.
 
 The components sum to the token-cycle wall time. These are host worker-activity
 categories, not pure device service time or a strict model MoE/non-MoE split.

@@ -31,15 +31,15 @@ BAR_KWARGS = {
 }
 
 COMPONENTS = (
-    ("ssd_only_ms", "SSD only", PALETTE["ssd"], "//"),
-    ("compute_only_ms", "Compute only", PALETTE["cpu"], ""),
+    ("ssd_only_ms", "Unhidden SSD I/O", PALETTE["ssd"], "//"),
     (
         "ssd_compute_overlap_ms",
-        "SSD + compute overlap",
+        "Overlapped I/O and computation",
         PALETTE["data_movement"],
         "\\\\",
     ),
-    ("other_ms", "Other", PALETTE["other"], ".."),
+    ("compute_only_ms", "Expert computation only", PALETTE["cpu"], ""),
+    ("other_ms", "Other model and runtime work", PALETTE["other"], ".."),
 )
 
 
@@ -142,7 +142,7 @@ def plot(input_csv: Path, output_stem: Path) -> None:
             x_values,
             values,
             bottom=bottoms,
-            width=2.7,
+            width=2.2,
             color=color,
             hatch=hatch,
             label=label,
@@ -171,7 +171,7 @@ def plot(input_csv: Path, output_stem: Path) -> None:
     ax.legend(
         loc="lower center",
         bbox_to_anchor=(0.5, 1.01),
-        ncol=4,
+        ncol=2,
         frameon=False,
         handlelength=1.45,
         columnspacing=1.0,
