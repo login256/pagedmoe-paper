@@ -1,0 +1,13 @@
+{
+  "trace_log": "/home/lyt/paged-moe/paper/figure/int4-trace-pipeline-motivation/decode500_server.log",
+  "calibration_csv": "/home/lyt/paged-moe/paper/figure/int4-pipeline-read-compute/qwen35_397b_int4_pipeline_read_compute_summary.csv",
+  "decode_tokens": 500,
+  "layers": 60,
+  "top_k": 10,
+  "precision_bits": 4,
+  "bitplane_bytes": 1572864,
+  "decode_trace_records": 30000,
+  "expert_accesses": 300000,
+  "cache_policy": "global bitplane LRU; codebooks excluded from bitplane capacity",
+  "pipeline_model": "per-layer miss-count interpolation from Qwen3.5-397B INT4 O_DIRECT calibration"
+}

@@ -227,7 +227,7 @@ Rules:
 ### PagedMoE precision/cache line plots
 
 The following visual language is mandatory for PagedMoE throughput, cache-size,
-cache-hit-rate, prefix-reuse, and mmap-fallback line plots. It overrides the
+cache-hit-rate, independent-precision, and mmap-backend line plots. It overrides the
 generic method-oriented line and marker mappings above.
 
 Color and marker encode the precision policy:
@@ -245,7 +245,7 @@ Line style encodes the execution or cache path:
 |---|---:|
 | Complete PagedMoE | `-` solid |
 | Without prefix reuse | `--` dashed |
-| With mmap fallback | `:` dotted |
+| mmap backend | `:` dotted |
 | External mmap Q4_0 baseline | `-.` dash-dot |
 
 Required combined styles:
@@ -258,8 +258,8 @@ Required combined styles:
 | Dynamic Avg 4-bit w/o Prefix Reuse | teal `--` with hollow `D` |
 | Dynamic Avg 2.5-bit | orange `-` with hollow `o` |
 | Dynamic Avg 2.5-bit w/o Prefix Reuse | orange `--` with hollow `o` |
-| Uniform 4-bit w/ mmap fallback | deep blue `:` with hollow `s` |
-| Dynamic Avg 2.5-bit w/ mmap fallback | orange `:` with hollow `o` |
+| Uniform 4-bit on mmap backend | deep blue `:` with hollow `s` |
+| Dynamic Avg 2.5-bit on mmap backend | orange `:` with hollow `o` |
 
 Rules:
 
@@ -267,8 +267,8 @@ Rules:
   style changes with the execution or cache path.
 - All markers must be hollow: use `markerfacecolor="#FFFFFF"` and set
   `markeredgecolor` to the curve color.
-- Reserve black dash-dot triangles for the external mmap Q4_0 baseline. An
-  internal mmap-fallback ablation keeps its policy color and marker.
+- Reserve black dash-dot triangles for the external mmap Q4_0 baseline. The
+  internal mmap-backend comparison keeps its policy color and marker.
 - Do not use an `x` marker for w/o-prefix curves; use the base policy marker
   with a dashed line.
 
@@ -285,7 +285,7 @@ PAGEDMOE_POLICY_STYLE = {
 PAGEDMOE_PATH_LINESTYLE = {
     "complete": "-",
     "without_prefix_reuse": "--",
-    "with_mmap_fallback": ":",
+    "mmap_backend": ":",
     "external_mmap_q4_0": "-.",
 }
 
@@ -721,7 +721,7 @@ PAGEDMOE_POLICY_STYLE = {
 PAGEDMOE_PATH_LINESTYLE = {
     "complete": "-",
     "without_prefix_reuse": "--",
-    "with_mmap_fallback": ":",
+    "mmap_backend": ":",
     "external_mmap_q4_0": "-.",
 }
 

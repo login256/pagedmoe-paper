@@ -1,133 +1,214 @@
 #!/usr/bin/env python3
-"""Plot cache-size throughput and cache-policy ablations for Qwen3.5."""
+"""Plot the three Qwen3.5 cache-size figures from the audited July 14 runs."""
 
 from __future__ import annotations
 
 import argparse
 import csv
-import re
+import hashlib
+import math
+import statistics
 from collections import defaultdict
+from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parents[2]
-OLD_SUMMARY = (
-    REPO_ROOT
-    / "src/target/bench/kt_pagedmoe_dynamic_static_cache8-64_perf_hitrate_summary.csv"
+PAPER_ROOT = SCRIPT_DIR.parents[1]
+DATA_DIR = SCRIPT_DIR / "data"
+EXPECTED_GRID = tuple(float(value) for value in range(4, 53, 4))
+MAX_PLOT_MEMORY_GIB = 48.0
+PLOT_XTICKS = list(range(0, 49, 8))
+TOTAL_MEMORY_XTICKS = list(range(0, 57, 8))
+GIB = 1024**3
+
+OVERHEAD_SOURCE = DATA_DIR / "shared_non_bitplane_memory_overhead_20260714_165151.csv"
+OVERHEAD_SOURCE_SHA256 = "74d3ded11bbf994414d1bf91641925b2c08393eb2c3acfd94ef80fbb8c867ab2"
+OVERHEAD_FIELD = "final_non_pool_pss_exact"
+SHARED_MEMORY_OVERHEAD_GIB = 5.2
+
+IK_LLAMA_SOURCE = DATA_DIR / "ik_llama_ud_iq4_xs_expert_20260716_190707.csv"
+IK_LLAMA_SOURCE_SHA256 = "1a9ae021643bd0fe2c57941a759a1457b23b736148b05dd8c629ffed46ed57ca"
+IK_LLAMA_RUN_ID = "20260716_190707"
+IK_LLAMA_EXPECTED_GRID = tuple(float(value) for value in range(8, 49, 8))
+IK_LLAMA_HOST_OVERHEAD_BYTES = 1_364_856_832
+IK_LLAMA_MESSAGE_SHA256 = (
+    "1f22083f046b74831775c19b1e27e7e903543131f79d66e8076b35bc842821b5"
 )
-BREAKDOWN_SUMMARY = REPO_ROOT / "logs/qwen35_breakdown_combined_20260701/summary.md"
-MMAP_STATIC4_RAW_SUMMARY = (
-    REPO_ROOT
-    / "logs/qwen35_mmap_static4_c2p5l25_8to64_20260630_182406/summary.raw.csv"
-)
-IK_LLAMA_MMAP_Q4_0 = [(16.0, 1.21), (32.0, 1.50), (48.0, 1.99), (64.0, 2.32)]
 
 PALETTE = {
-    "ours": "#D55E00",
-    "strong_baseline": "#009E73",
-    "secondary": "#009E73",
-    "gray": "#0072B2",
+    "dynamic2p5": "#D55E00",
+    "dynamic4": "#009E73",
+    "uniform4": "#0072B2",
     "black": "#000000",
     "light_gray": "#DDDDDD",
     "white": "#FFFFFF",
 }
 
-FIGURES = {
-    "end-to-end": {
-        "output_name": "fig_cache_size_end_to_end_throughput",
-        "series": [
-            {
-                "key": "ik_llama_mmap_q4_0",
-                "label": "ik_llama.cpp Q4_0",
-                "color": PALETTE["black"],
-                "linestyle": "-.",
-                "marker": "^",
-            },
-            {
-                "key": "uniform4",
-                "label": "Uniform 4-bit",
-                "color": PALETTE["gray"],
-                "linestyle": "-",
-                "marker": "s",
-            },
-            {
-                "key": "dynamic4",
-                "label": "Dynamic Avg 4-bit",
-                "color": PALETTE["strong_baseline"],
-                "linestyle": "-",
-                "marker": "D",
-            },
-            {
-                "key": "dynamic2p5",
-                "label": "Dynamic Avg 2.5-bit",
-                "color": PALETTE["ours"],
-                "linestyle": "-",
-                "marker": "o",
-            },
-        ],
+
+@dataclass(frozen=True)
+class SourceSpec:
+    path: Path
+    expected_sha256: str
+    run_id: str
+    budget_kind: str
+    precision_mode: str
+    precision: str
+    average_bits: float
+    max_load_bits: int | None = None
+
+
+@dataclass(frozen=True)
+class Point:
+    memory_gib: float
+    value: float | None
+    status: str
+    n: int
+    std: float | None
+
+
+@dataclass(frozen=True)
+class SeriesData:
+    points: tuple[Point, ...]
+    source: str
+    source_sha256: str
+    run_id: str
+    budget_kind: str
+
+
+@dataclass(frozen=True)
+class MemoryOverhead:
+    value_gib: float
+    source: str
+    source_sha256: str
+    basis: str
+
+
+SHARED_SOURCES = {
+    "uniform4": SourceSpec(
+        path=DATA_DIR / "shared_static4_20260714_104754.csv",
+        expected_sha256="d897953bf07e61758eea29bab3a252fbd80d62cf53ed9acb0ab8ea093dd988f6",
+        run_id="20260714_104754",
+        budget_kind="user_space_shared_bitplane_pool",
+        precision_mode="schedule",
+        precision="4,4,4,4,4,4,4,4,4,4",
+        average_bits=4.0,
+    ),
+    "dynamic4": SourceSpec(
+        path=DATA_DIR / "shared_c4l40_20260714_111629.csv",
+        expected_sha256="35e922400e11b65ffea97ac4e8506afab748b965aec42ffc4cd8d2c1ce2f454b",
+        run_id="20260714_111629",
+        budget_kind="user_space_shared_bitplane_pool",
+        precision_mode="marginal_gain",
+        precision="c4l40",
+        average_bits=4.0,
+        max_load_bits=40,
+    ),
+    "dynamic2p5": SourceSpec(
+        path=DATA_DIR / "shared_c2p5l25_20260714_114526.csv",
+        expected_sha256="6f34fbe2d3830e7c1d6720fedd7cf63e90ce26cf1faa653b21227f4ade02e646",
+        run_id="20260714_114526",
+        budget_kind="user_space_shared_bitplane_pool",
+        precision_mode="marginal_gain",
+        precision="c2p5l25",
+        average_bits=2.5,
+        max_load_bits=25,
+    ),
+    "naive2p5": SourceSpec(
+        path=DATA_DIR / "naive_c2p5l25_20260714_120810.csv",
+        expected_sha256="210b1d932d1dfd47935062d2f755f9c611460d95b558878184dda76ca3b9c983",
+        run_id="20260714_120810",
+        budget_kind="user_space_independent_precision_pool",
+        precision_mode="marginal_gain",
+        precision="c2p5l25",
+        average_bits=2.5,
+        max_load_bits=25,
+    ),
+}
+
+MMAP_SOURCE = SourceSpec(
+    path=DATA_DIR / "mmap_static4_c2p5l25_20260714_125412.csv",
+    expected_sha256="7a13c60f17a2146dde6c00135c8407482f9b8d0833b2ab0b4fa6491bb11664af",
+    run_id="20260714_125412",
+    budget_kind="total_cgroup_memory_max",
+    precision_mode="mixed",
+    precision="mixed",
+    average_bits=0.0,
+)
+
+CURVE_STYLE = {
+    "ik_llama": {
+        "label": "ik_llama.cpp UD-IQ4_XS",
+        "color": PALETTE["black"],
+        "linestyle": "-.",
+        "marker": "^",
     },
-    "prefix-reuse": {
-        "output_name": "fig_cache_size_prefix_reuse_ablation",
-        "series": [
-            {
-                "key": "uniform4",
-                "label": "Uniform 4-bit",
-                "color": PALETTE["gray"],
-                "linestyle": "-",
-                "marker": "s",
-            },
-            {
-                "key": "naive2p5",
-                "label": "Dynamic Avg 2.5-bit w/o Prefix Reuse",
-                "color": PALETTE["ours"],
-                "linestyle": "--",
-                "marker": "o",
-            },
-            {
-                "key": "dynamic2p5",
-                "label": "Dynamic Avg 2.5-bit",
-                "color": PALETTE["ours"],
-                "linestyle": "-",
-                "marker": "o",
-            },
-        ],
+    "uniform4": {
+        "label": "Uniform 4-bit",
+        "color": PALETTE["uniform4"],
+        "linestyle": "-",
+        "marker": "s",
     },
-    "mmap-fallback": {
-        "output_name": "fig_cache_size_mmap_fallback_ablation",
-        "series": [
-            {
-                "key": "uniform4",
-                "label": "Uniform 4-bit",
-                "color": PALETTE["gray"],
-                "linestyle": "-",
-                "marker": "s",
-            },
-            {
-                "key": "mmap_uniform4_static",
-                "label": "Uniform 4-bit w/ mmap fallback",
-                "color": PALETTE["gray"],
-                "linestyle": ":",
-                "marker": "s",
-            },
-            {
-                "key": "dynamic2p5",
-                "label": "Dynamic Avg 2.5-bit",
-                "color": PALETTE["ours"],
-                "linestyle": "-",
-                "marker": "o",
-            },
-            {
-                "key": "mmap_dynamic2p5_breakdown",
-                "label": "Dynamic Avg 2.5-bit w/ mmap fallback",
-                "color": PALETTE["ours"],
-                "linestyle": ":",
-                "marker": "o",
-            },
-        ],
+    "dynamic4": {
+        "label": "Dynamic Avg 4-bit",
+        "color": PALETTE["dynamic4"],
+        "linestyle": "-",
+        "marker": "D",
     },
+    "dynamic2p5": {
+        "label": "Dynamic Avg 2.5-bit",
+        "color": PALETTE["dynamic2p5"],
+        "linestyle": "-",
+        "marker": "o",
+    },
+    "naive2p5": {
+        "label": "Dynamic Avg 2.5-bit (independent)",
+        "color": PALETTE["dynamic2p5"],
+        "linestyle": "--",
+        "marker": "o",
+    },
+    "mmap_uniform4": {
+        "label": "Uniform 4-bit",
+        "color": PALETTE["uniform4"],
+        "linestyle": ":",
+        "marker": "s",
+    },
+    "mmap_dynamic2p5": {
+        "label": "Dynamic Avg 2.5-bit",
+        "color": PALETTE["dynamic2p5"],
+        "linestyle": ":",
+        "marker": "o",
+    },
+}
+
+FIGURE_SERIES = {
+    "end-to-end": ("ik_llama", "uniform4", "dynamic4", "dynamic2p5"),
+    "independent-precision": ("uniform4", "naive2p5", "dynamic2p5"),
+    "mmap-backend": (
+        "uniform4",
+        "dynamic2p5",
+        "mmap_uniform4",
+        "mmap_dynamic2p5",
+    ),
+}
+
+OUTPUT_NAMES = {
+    "end-to-end": (
+        "fig_cache_size_end_to_end_throughput",
+        "fig_cache_size_token_s",
+    ),
+    "independent-precision": (
+        "fig_cache_size_independent_precision_comparison",
+        # Compatibility alias for the filename introduced in paper commit 588afbf.
+        "fig_cache_size_prefix_reuse_ablation",
+    ),
+    "mmap-backend": (
+        "fig_cache_size_mmap_backend_comparison",
+        # Compatibility alias for the filename introduced in paper commit 588afbf.
+        "fig_cache_size_mmap_fallback_ablation",
+    ),
 }
 
 
@@ -147,7 +228,7 @@ def configure_matplotlib() -> None:
             "ytick.major.size": 3,
             "xtick.major.width": 0.7,
             "ytick.major.width": 0.7,
-            "legend.fontsize": 6.4,
+            "legend.fontsize": 6.2,
             "pdf.fonttype": 42,
             "ps.fonttype": 42,
             "figure.facecolor": PALETTE["white"],
@@ -159,137 +240,388 @@ def configure_matplotlib() -> None:
     )
 
 
-def read_old_series() -> dict[str, list[tuple[float, float]]]:
-    case_to_key = {"c4l40": "dynamic4"}
-    grouped: dict[str, defaultdict[float, list[float]]] = {
-        key: defaultdict(list) for key in case_to_key.values()
-    }
-    with OLD_SUMMARY.open(newline="") as handle:
-        for row in csv.DictReader(handle):
-            key = case_to_key.get(row["case"])
-            if key is None or row["status"] != "ok":
-                continue
-            grouped[key][float(row["cache_size_gib"])].append(
-                float(row["decode_token_per_s"])
-            )
-    return {
-        key: [
-            (cache_gib, sum(values) / len(values))
-            for cache_gib, values in sorted(by_cache.items())
-        ]
-        for key, by_cache in grouped.items()
-    }
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
-def split_markdown_row(line: str) -> list[str]:
-    return [cell.strip() for cell in line.strip().strip("|").split("|")]
+def relative_source(path: Path) -> str:
+    return str(path.resolve().relative_to(PAPER_ROOT.resolve()))
 
 
-def read_breakdown_series() -> dict[str, list[tuple[float, float]]]:
-    lines = BREAKDOWN_SUMMARY.read_text(encoding="utf-8").splitlines()
-    heading_index = lines.index("## Decode TPS")
-    table_lines: list[str] = []
-    for line in lines[heading_index + 1 :]:
-        if line.startswith("|"):
-            table_lines.append(line)
-        elif table_lines:
-            break
-
-    header = split_markdown_row(table_lines[0])
-    rows = [
-        dict(zip(header, split_markdown_row(line), strict=True))
-        for line in table_lines[2:]
-    ]
-    column_to_key = {
-        "bitplane static4": "uniform4",
-        "mmap c2.5l25": "mmap_dynamic2p5_breakdown",
-        "naive c2.5l25": "naive2p5",
-        "bitplane c2.5l25": "dynamic2p5",
-    }
-    return {
-        key: [
-            (float(row["cache GiB"]), float(row[column]))
-            for row in rows
-            if row[column] not in {"", "-", "failed"}
-        ]
-        for column, key in column_to_key.items()
-    }
-
-
-def extract_metric(log_path: Path, name: str) -> float:
-    text = log_path.read_text(encoding="utf-8")
-    match = re.search(rf"\b{re.escape(name)}=([0-9.]+)", text)
-    if match is None:
-        raise ValueError(f"missing {name} in {log_path}")
-    return float(match.group(1))
-
-
-def read_mmap_static4_series() -> dict[str, list[tuple[float, float]]]:
-    values: list[tuple[float, float]] = []
-    with MMAP_STATIC4_RAW_SUMMARY.open(newline="") as handle:
-        for row in csv.DictReader(handle):
-            if row["precision"] != "static4" or row["exit_code"] != "0":
-                continue
-            log_path = Path(row["stdout_log"])
-            if not log_path.is_absolute():
-                log_path = REPO_ROOT / log_path
-            if extract_metric(log_path, "prompt_tokens") != 118:
-                raise ValueError(f"unexpected prompt length in {log_path}")
-            if extract_metric(log_path, "decode_steps") != 500:
-                raise ValueError(f"unexpected decode length in {log_path}")
-            values.append(
-                (
-                    float(row["cache_gib"]),
-                    extract_metric(log_path, "decode_token_per_s_from_log"),
-                )
-            )
-    values.sort()
-    return {"mmap_uniform4_static": values}
-
-
-def load_all_series() -> dict[str, list[tuple[float, float]]]:
-    series = {
-        **read_old_series(),
-        **read_breakdown_series(),
-        **read_mmap_static4_series(),
-        "ik_llama_mmap_q4_0": IK_LLAMA_MMAP_Q4_0,
-    }
-    required = {spec["key"] for config in FIGURES.values() for spec in config["series"]}
-    missing = sorted(required - series.keys())
+def require_columns(path: Path, fieldnames: list[str] | None, required: set[str]) -> None:
+    missing = required - set(fieldnames or ())
     if missing:
-        raise ValueError(f"missing series: {missing}")
+        raise ValueError(f"{path}: missing columns: {', '.join(sorted(missing))}")
+
+
+def aggregate_ok_points(values: dict[float, list[float]]) -> tuple[Point, ...]:
+    points = []
+    for memory_gib, samples in sorted(values.items()):
+        std = statistics.stdev(samples) if len(samples) > 1 else None
+        points.append(
+            Point(
+                memory_gib=memory_gib,
+                value=statistics.fmean(samples),
+                status="ok",
+                n=len(samples),
+                std=std,
+            )
+        )
+    return tuple(points)
+
+
+def validate_grid(path: Path, points: tuple[Point, ...]) -> None:
+    observed = tuple(point.memory_gib for point in points)
+    if observed != EXPECTED_GRID:
+        raise ValueError(f"{path}: expected grid {EXPECTED_GRID}, got {observed}")
+
+
+def read_shared_series(spec: SourceSpec) -> SeriesData:
+    required = {
+        "status",
+        "returncode",
+        "run_id",
+        "precision_mode",
+        "precision",
+        "average_precision",
+        "compute_avg_bits",
+        "max_load_bits",
+        "cache_size_gib",
+        "decode_steps",
+        "decode_token_per_s",
+        "decode_log_tokens_used",
+        "submitted_reads",
+        "completed_reads",
+        "submitted_compute_tasks",
+        "completed_compute_tasks",
+    }
+    grouped: dict[float, list[float]] = defaultdict(list)
+    actual_sha256 = sha256(spec.path)
+    if actual_sha256 != spec.expected_sha256:
+        raise ValueError(
+            f"{spec.path}: SHA256 changed; expected {spec.expected_sha256}, "
+            f"got {actual_sha256}"
+        )
+    with spec.path.open(newline="") as handle:
+        reader = csv.DictReader(handle)
+        require_columns(spec.path, reader.fieldnames, required)
+        rows = list(reader)
+
+    for row_number, row in enumerate(rows, start=2):
+        prefix = f"{spec.path}:{row_number}"
+        if row["status"] != "ok" or row["returncode"] != "0":
+            raise ValueError(f"{prefix}: unsuccessful shared/naive case")
+        if row["run_id"] != spec.run_id:
+            raise ValueError(f"{prefix}: expected run {spec.run_id}, got {row['run_id']}")
+        if row["precision_mode"] != spec.precision_mode:
+            raise ValueError(f"{prefix}: unexpected precision mode")
+        if row["precision"] != spec.precision:
+            raise ValueError(f"{prefix}: unexpected precision label/schedule")
+        if not math.isclose(float(row["average_precision"]), spec.average_bits):
+            raise ValueError(f"{prefix}: unexpected average precision")
+        if spec.max_load_bits is None:
+            if row["compute_avg_bits"] or row["max_load_bits"]:
+                raise ValueError(f"{prefix}: static schedule has a dynamic budget")
+        else:
+            if not math.isclose(float(row["compute_avg_bits"]), spec.average_bits):
+                raise ValueError(f"{prefix}: unexpected compute-average budget")
+            if int(row["max_load_bits"]) != spec.max_load_bits:
+                raise ValueError(f"{prefix}: unexpected max-load budget")
+        if row["decode_steps"] != "500" or row["decode_log_tokens_used"] != "480":
+            raise ValueError(f"{prefix}: unexpected decode workload")
+        if row["submitted_reads"] != row["completed_reads"]:
+            raise ValueError(f"{prefix}: incomplete reads")
+        if row["submitted_compute_tasks"] != row["completed_compute_tasks"]:
+            raise ValueError(f"{prefix}: incomplete compute tasks")
+
+        memory_gib = float(row["cache_size_gib"])
+        value = float(row["decode_token_per_s"])
+        if not math.isfinite(value) or value <= 0:
+            raise ValueError(f"{prefix}: invalid decode throughput {value}")
+        grouped[memory_gib].append(value)
+
+    points = aggregate_ok_points(grouped)
+    validate_grid(spec.path, points)
+    return SeriesData(
+        points=points,
+        source=relative_source(spec.path),
+        source_sha256=actual_sha256,
+        run_id=spec.run_id,
+        budget_kind=spec.budget_kind,
+    )
+
+
+def read_mmap_series(precision_label: str, expected_bits: float) -> SeriesData:
+    path = MMAP_SOURCE.path
+    required = {
+        "run_id",
+        "precision_label",
+        "precision_mode",
+        "precision_value",
+        "max_load_bits",
+        "memory_max_gib",
+        "bench_cache_size_gib",
+        "decode_steps",
+        "exit_code",
+        "completion_tokens",
+        "decode_log_tokens_used",
+        "decode_token_per_s_from_log",
+        "avg_target_bits",
+        "submitted_compute_tasks",
+        "completed_compute_tasks",
+    }
+    actual_sha256 = sha256(path)
+    if actual_sha256 != MMAP_SOURCE.expected_sha256:
+        raise ValueError(
+            f"{path}: SHA256 changed; expected {MMAP_SOURCE.expected_sha256}, "
+            f"got {actual_sha256}"
+        )
+    with path.open(newline="") as handle:
+        reader = csv.DictReader(handle)
+        require_columns(path, reader.fieldnames, required)
+        all_rows = list(reader)
+
+    observed_labels = {row["precision_label"] for row in all_rows}
+    if observed_labels != {"static4", "c2p5l25"}:
+        raise ValueError(f"{path}: unexpected precision labels: {sorted(observed_labels)}")
+    rows = [
+        (row_number, row)
+        for row_number, row in enumerate(all_rows, start=2)
+        if row["precision_label"] == precision_label
+    ]
+
+    grouped: dict[float, list[float]] = defaultdict(list)
+    failures: dict[float, list[str]] = defaultdict(list)
+    for row_number, row in rows:
+        prefix = f"{path}:{row_number} ({precision_label})"
+        if row["run_id"] != MMAP_SOURCE.run_id:
+            raise ValueError(f"{prefix}: unexpected run id")
+        memory_gib = float(row["memory_max_gib"])
+        if float(row["bench_cache_size_gib"]) != memory_gib:
+            raise ValueError(f"{prefix}: benchmark label differs from MemoryMax")
+        if row["decode_steps"] != "500":
+            raise ValueError(f"{prefix}: unexpected decode length")
+        if precision_label == "static4":
+            if row["precision_mode"] != "target":
+                raise ValueError(f"{prefix}: static4 is not target mode")
+            if row["precision_value"] != "4,4,4,4,4,4,4,4,4,4":
+                raise ValueError(f"{prefix}: static4 schedule is not fixed 4-bit")
+            if row["max_load_bits"]:
+                raise ValueError(f"{prefix}: static4 unexpectedly has max-load bits")
+        else:
+            if row["precision_mode"] != "dynamic":
+                raise ValueError(f"{prefix}: c2p5l25 is not dynamic mode")
+            if not math.isclose(float(row["precision_value"]), 2.5):
+                raise ValueError(f"{prefix}: c2p5l25 average is not 2.5")
+            if row["max_load_bits"] != "25":
+                raise ValueError(f"{prefix}: c2p5l25 max-load budget is not 25")
+
+        if row["exit_code"] == "0":
+            if row["completion_tokens"] != "500" or row["decode_log_tokens_used"] != "480":
+                raise ValueError(f"{prefix}: incomplete successful workload")
+            if not math.isclose(float(row["avg_target_bits"]), expected_bits):
+                raise ValueError(f"{prefix}: unexpected average target bits")
+            if row["submitted_compute_tasks"] != row["completed_compute_tasks"]:
+                raise ValueError(f"{prefix}: incomplete compute tasks")
+            value = float(row["decode_token_per_s_from_log"])
+            if not math.isfinite(value) or value <= 0:
+                raise ValueError(f"{prefix}: invalid decode throughput {value}")
+            grouped[memory_gib].append(value)
+        else:
+            failures[memory_gib].append(row["exit_code"])
+
+    observed_grid = tuple(sorted(set(grouped) | set(failures)))
+    if observed_grid != EXPECTED_GRID:
+        raise ValueError(f"{path}: expected {EXPECTED_GRID}, got {observed_grid}")
+    if failures != {4.0: ["137"]}:
+        raise ValueError(f"{path}: unexpected {precision_label} failures: {dict(failures)}")
+
+    points = list(aggregate_ok_points(grouped))
+    points.append(Point(4.0, None, "oom", 0, None))
+    points.sort(key=lambda point: point.memory_gib)
+    return SeriesData(
+        points=tuple(points),
+        source=relative_source(path),
+        source_sha256=actual_sha256,
+        run_id=MMAP_SOURCE.run_id,
+        budget_kind=MMAP_SOURCE.budget_kind,
+    )
+
+
+def read_shared_memory_overhead() -> MemoryOverhead:
+    actual_sha256 = sha256(OVERHEAD_SOURCE)
+    if actual_sha256 != OVERHEAD_SOURCE_SHA256:
+        raise ValueError(
+            f"{OVERHEAD_SOURCE}: SHA256 changed; expected {OVERHEAD_SOURCE_SHA256}, "
+            f"got {actual_sha256}"
+        )
+    with OVERHEAD_SOURCE.open(newline="") as handle:
+        reader = csv.DictReader(handle)
+        require_columns(
+            OVERHEAD_SOURCE,
+            reader.fieldnames,
+            {"cache_size_gib", OVERHEAD_FIELD},
+        )
+        rows = list(reader)
+    cache_sizes = [float(row["cache_size_gib"]) for row in rows]
+    if cache_sizes != [4.0, 8.0, 12.0]:
+        raise ValueError(f"{OVERHEAD_SOURCE}: unexpected cache cases {cache_sizes}")
+    samples_gib = [int(row[OVERHEAD_FIELD]) / GIB for row in rows]
+    if not all(5.0 <= value <= 5.5 for value in samples_gib):
+        raise ValueError(f"{OVERHEAD_SOURCE}: unexpected overhead samples {samples_gib}")
+    return MemoryOverhead(
+        value_gib=SHARED_MEMORY_OVERHEAD_GIB,
+        source=relative_source(OVERHEAD_SOURCE),
+        source_sha256=actual_sha256,
+        basis=(
+            "fixed 5.2 GiB post-decode process-PSS overhead, rounded from "
+            "the formal 4/8/12-GiB measurements"
+        ),
+    )
+
+
+def read_ik_llama_series() -> SeriesData:
+    path = IK_LLAMA_SOURCE
+    required = {
+        "phase",
+        "case_id",
+        "nominal_gib",
+        "memory_max_bytes",
+        "memory_max_gib",
+        "status",
+        "error",
+        "prompt_tokens",
+        "completion_tokens",
+        "predicted_ms",
+        "predicted_per_second",
+        "reasoning_present",
+        "message_sha256",
+        "routed_expert_resident",
+        "non_routed_overhead_current",
+        "oom",
+        "oom_kill_events",
+        "cache_clear_after_stop_ok",
+    }
+    actual_sha256 = sha256(path)
+    if actual_sha256 != IK_LLAMA_SOURCE_SHA256:
+        raise ValueError(
+            f"{path}: SHA256 changed; expected {IK_LLAMA_SOURCE_SHA256}, "
+            f"got {actual_sha256}"
+        )
+    with path.open(newline="") as handle:
+        reader = csv.DictReader(handle)
+        require_columns(path, reader.fieldnames, required)
+        rows = list(reader)
+
+    grouped: dict[float, list[float]] = defaultdict(list)
+    for row_number, row in enumerate(rows, start=2):
+        prefix = f"{path}:{row_number}"
+        nominal_gib = float(row["nominal_gib"])
+        if row["phase"] != "expert":
+            raise ValueError(f"{prefix}: expected expert-budget phase")
+        if row["case_id"] != f"expert_{int(nominal_gib):02d}g":
+            raise ValueError(f"{prefix}: case id does not match nominal budget")
+        if row["status"] != "success" or row["error"]:
+            raise ValueError(f"{prefix}: unsuccessful ik_llama.cpp case")
+
+        expected_memory_max = int(nominal_gib * GIB) + IK_LLAMA_HOST_OVERHEAD_BYTES
+        memory_max_bytes = int(row["memory_max_bytes"])
+        if memory_max_bytes != expected_memory_max:
+            raise ValueError(f"{prefix}: unexpected total MemoryMax")
+        if not math.isclose(float(row["memory_max_gib"]), memory_max_bytes / GIB):
+            raise ValueError(f"{prefix}: inconsistent MemoryMax GiB")
+        if row["prompt_tokens"] != "118" or row["completion_tokens"] != "500":
+            raise ValueError(f"{prefix}: unexpected decode workload")
+        if row["reasoning_present"] != "True":
+            raise ValueError(f"{prefix}: thinking output is absent")
+        if row["message_sha256"] != IK_LLAMA_MESSAGE_SHA256:
+            raise ValueError(f"{prefix}: output differs from the audited workload")
+        if row["oom"] != "False" or row["oom_kill_events"] != "0":
+            raise ValueError(f"{prefix}: OOM in ik_llama.cpp case")
+        if row["cache_clear_after_stop_ok"] != "True":
+            raise ValueError(f"{prefix}: post-case cache clear was not verified")
+
+        predicted_ms = float(row["predicted_ms"])
+        value = float(row["predicted_per_second"])
+        calculated_value = 500 / (predicted_ms / 1000)
+        if not math.isclose(value, calculated_value, rel_tol=1e-6):
+            raise ValueError(f"{prefix}: inconsistent decode timing")
+        if not math.isfinite(value) or value <= 0:
+            raise ValueError(f"{prefix}: invalid decode throughput {value}")
+        grouped[nominal_gib].append(value)
+
+    points = aggregate_ok_points(grouped)
+    observed_grid = tuple(point.memory_gib for point in points)
+    if observed_grid != IK_LLAMA_EXPECTED_GRID:
+        raise ValueError(
+            f"{path}: expected grid {IK_LLAMA_EXPECTED_GRID}, got {observed_grid}"
+        )
+    if any(point.n != 1 for point in points):
+        raise ValueError(f"{path}: expected exactly one run per expert budget")
+    return SeriesData(
+        points=points,
+        source=relative_source(path),
+        source_sha256=actual_sha256,
+        run_id=IK_LLAMA_RUN_ID,
+        budget_kind="nominal_routed_expert_mmap_budget",
+    )
+
+
+def load_all_series() -> dict[str, SeriesData]:
+    series = {key: read_shared_series(spec) for key, spec in SHARED_SOURCES.items()}
+    series["mmap_uniform4"] = read_mmap_series("static4", 4.0)
+    series["mmap_dynamic2p5"] = read_mmap_series("c2p5l25", 2.5)
+    series["ik_llama"] = read_ik_llama_series()
     return series
 
 
-def plot_figure(
-    figure_name: str,
-    all_series: dict[str, list[tuple[float, float]]],
-    output_dir: Path,
+def draw_series(
+    ax: plt.Axes,
+    key: str,
+    data: SeriesData,
+    label: str | None = None,
+    x_offset_gib: float = 0.0,
 ) -> None:
-    config = FIGURES[figure_name]
-    fig, ax = plt.subplots(figsize=(3.35, 2.35))
+    style = CURVE_STYLE[key]
+    points = [
+        point
+        for point in data.points
+        if point.status != "oom" and point.memory_gib <= MAX_PLOT_MEMORY_GIB
+    ]
+    x_values = [point.memory_gib + x_offset_gib for point in points]
+    y_values = [point.value for point in points]
+    ax.plot(
+        x_values,
+        y_values,
+        color=style["color"],
+        linestyle=style["linestyle"],
+        linewidth=1.45,
+        marker=style["marker"],
+        markersize=3.0,
+        markerfacecolor=PALETTE["white"],
+        markeredgecolor=style["color"],
+        markeredgewidth=0.75,
+        label=label or style["label"],
+        zorder=3,
+    )
 
-    for spec in config["series"]:
-        values = all_series[spec["key"]]
-        ax.plot(
-            [cache_gib for cache_gib, _ in values],
-            [tokens_per_s for _, tokens_per_s in values],
-            color=spec["color"],
-            linestyle=spec["linestyle"],
-            linewidth=1.45,
-            marker=spec["marker"],
-            markersize=3.0,
-            markerfacecolor=PALETTE["white"],
-            markeredgecolor=spec["color"],
-            markeredgewidth=0.75,
-            label=spec["label"],
-            zorder=3,
-        )
 
-    ax.set_xlim(6, 66)
-    ax.set_ylim(0, 10.5)
-    ax.set_xticks([8, 16, 24, 32, 40, 48, 56, 64])
-    ax.set_yticks([0, 2, 4, 6, 8, 10])
+def configure_axes(
+    ax: plt.Axes,
+    *,
+    xlim: tuple[float, float],
+    xticks: list[int],
+    xlabel: str,
+    ylabel: bool,
+) -> None:
+    ax.set_xlim(*xlim)
+    ax.set_ylim(0, 12.5)
+    ax.set_xticks(xticks)
+    ax.set_yticks([0, 2, 4, 6, 8, 10, 12])
     ax.grid(
         axis="y",
         linestyle=(0, (2, 2)),
@@ -300,8 +632,46 @@ def plot_figure(
     ax.set_axisbelow(True)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
-    ax.set_xlabel("Cache size (GiB)")
-    ax.set_ylabel("Decode throughput (tokens/s)")
+    ax.set_xlabel(xlabel)
+    if ylabel:
+        ax.set_ylabel("Decode throughput (tokens/s)")
+
+
+def save_figure(fig: plt.Figure, output_dir: Path, output_names: tuple[str, ...]) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for output_name in output_names:
+        output_stem = output_dir / output_name
+        fig.savefig(output_stem.with_suffix(".pdf"), bbox_inches="tight")
+        fig.savefig(output_stem.with_suffix(".png"), dpi=300, bbox_inches="tight")
+
+
+def plot_single_panel(
+    figure_name: str,
+    all_series: dict[str, SeriesData],
+    output_dir: Path,
+    output_names: tuple[str, ...] | None = None,
+) -> None:
+    fig, ax = plt.subplots(figsize=(3.35, 2.35))
+    for key in FIGURE_SERIES[figure_name]:
+        draw_series(ax, key, all_series[key])
+
+    if figure_name == "end-to-end":
+        configure_axes(
+            ax,
+            xlim=(0, 50),
+            xticks=PLOT_XTICKS,
+            xlabel="Expert cache capacity (GiB)",
+            ylabel=True,
+        )
+    else:
+        configure_axes(
+            ax,
+            xlim=(0, 50),
+            xticks=PLOT_XTICKS,
+            xlabel="Cache capacity (GiB)",
+            ylabel=True,
+        )
+
     ax.legend(
         loc="lower center",
         bbox_to_anchor=(0.5, 1.01),
@@ -312,82 +682,188 @@ def plot_figure(
         handletextpad=0.3,
         borderaxespad=0.0,
     )
-
-    output_dir.mkdir(parents=True, exist_ok=True)
     fig.tight_layout(pad=0.45)
-    output_stem = output_dir / config["output_name"]
-    fig.savefig(output_stem.with_suffix(".pdf"), bbox_inches="tight")
-    fig.savefig(output_stem.with_suffix(".png"), dpi=300, bbox_inches="tight")
+    save_figure(fig, output_dir, output_names or OUTPUT_NAMES[figure_name])
     plt.close(fig)
+
+
+def plot_mmap_backend(
+    all_series: dict[str, SeriesData],
+    output_dir: Path,
+    output_names: tuple[str, ...] | None = None,
+) -> None:
+    overhead = read_shared_memory_overhead()
+    fig, ax = plt.subplots(figsize=(3.35, 2.35))
+
+    draw_series(
+        ax,
+        "uniform4",
+        all_series["uniform4"],
+        label="Uniform 4-bit (shared)",
+        x_offset_gib=overhead.value_gib,
+    )
+    draw_series(
+        ax,
+        "mmap_uniform4",
+        all_series["mmap_uniform4"],
+        label="Uniform 4-bit (mmap)",
+    )
+    draw_series(
+        ax,
+        "dynamic2p5",
+        all_series["dynamic2p5"],
+        label="Dynamic Avg 2.5-bit (shared)",
+        x_offset_gib=overhead.value_gib,
+    )
+    draw_series(
+        ax,
+        "mmap_dynamic2p5",
+        all_series["mmap_dynamic2p5"],
+        label="Dynamic Avg 2.5-bit (mmap)",
+    )
+    configure_axes(
+        ax,
+        xlim=(0, 56),
+        xticks=TOTAL_MEMORY_XTICKS,
+        xlabel="Total Memory (GiB)",
+        ylabel=True,
+    )
+    ax.legend(
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.01),
+        ncol=2,
+        frameon=False,
+        handlelength=1.45,
+        columnspacing=0.55,
+        handletextpad=0.3,
+        borderaxespad=0.0,
+        fontsize=5.8,
+    )
+    fig.tight_layout(pad=0.45)
+    save_figure(fig, output_dir, output_names or OUTPUT_NAMES["mmap-backend"])
+    plt.close(fig)
+
+
+def plot_figure(
+    figure_name: str,
+    all_series: dict[str, SeriesData],
+    output_dir: Path,
+    output_names: tuple[str, ...] | None = None,
+) -> None:
+    if figure_name == "mmap-backend":
+        plot_mmap_backend(all_series, output_dir, output_names)
+    else:
+        plot_single_panel(figure_name, all_series, output_dir, output_names)
+
+
+def display_label(figure_name: str, key: str) -> str:
+    if figure_name == "mmap-backend":
+        backend = "mmap backend" if key.startswith("mmap_") else "shared-bitplane"
+        policy_key = key.removeprefix("mmap_")
+        return f"{CURVE_STYLE[policy_key]['label']} ({backend})"
+    return str(CURVE_STYLE[key]["label"])
 
 
 def write_plot_data(
     selected_figures: list[str],
-    all_series: dict[str, list[tuple[float, float]]],
+    all_series: dict[str, SeriesData],
     output_dir: Path,
 ) -> None:
-    sources = {
-        "dynamic4": str(OLD_SUMMARY.relative_to(REPO_ROOT)),
-        "uniform4": str(BREAKDOWN_SUMMARY.relative_to(REPO_ROOT)),
-        "naive2p5": str(BREAKDOWN_SUMMARY.relative_to(REPO_ROOT)),
-        "dynamic2p5": str(BREAKDOWN_SUMMARY.relative_to(REPO_ROOT)),
-        "ik_llama_mmap_q4_0": (
-            "paper/figure/cache-size-token-s/plot_cache_size_token_s.py:manual_values"
-        ),
-        "mmap_uniform4_static": str(
-            MMAP_STATIC4_RAW_SUMMARY.relative_to(REPO_ROOT)
-        ),
-        "mmap_dynamic2p5_breakdown": str(BREAKDOWN_SUMMARY.relative_to(REPO_ROOT)),
-    }
+    overhead = read_shared_memory_overhead()
     rows = []
     for figure_name in selected_figures:
-        for spec in FIGURES[figure_name]["series"]:
-            for cache_gib, tokens_per_s in all_series[spec["key"]]:
+        for key in FIGURE_SERIES[figure_name]:
+            data = all_series[key]
+            for point in data.points:
+                if point.memory_gib > MAX_PLOT_MEMORY_GIB:
+                    continue
+                plotted_memory_gib = point.memory_gib
+                plotted_budget_kind = data.budget_kind
+                memory_overhead_gib = 0.0
+                overhead_source = ""
+                overhead_source_sha256 = ""
+                overhead_basis = ""
+                if figure_name == "mmap-backend" and not key.startswith("mmap_"):
+                    plotted_memory_gib += overhead.value_gib
+                    plotted_budget_kind = "estimated_total_memory_capacity_plus_pss_overhead"
+                    memory_overhead_gib = overhead.value_gib
+                    overhead_source = overhead.source
+                    overhead_source_sha256 = overhead.source_sha256
+                    overhead_basis = overhead.basis
                 rows.append(
                     {
                         "figure": figure_name,
-                        "series": spec["label"],
-                        "cache_size_gib": f"{cache_gib:g}",
-                        "decode_token_per_s": f"{tokens_per_s:.4f}",
-                        "source": sources[spec["key"]],
+                        "curve_key": key,
+                        "series": display_label(figure_name, key),
+                        "memory_gib": f"{plotted_memory_gib:.6f}",
+                        "source_memory_gib": f"{point.memory_gib:g}",
+                        "memory_overhead_gib": f"{memory_overhead_gib:.6f}",
+                        "decode_token_per_s": (
+                            "" if point.value is None else f"{point.value:.4f}"
+                        ),
+                        "status": point.status,
+                        "budget_kind": plotted_budget_kind,
+                        "source_budget_kind": data.budget_kind,
+                        "n": str(point.n),
+                        "std": "" if point.std is None else f"{point.std:.6f}",
+                        "run_id": data.run_id,
+                        "source": data.source,
+                        "source_sha256": data.source_sha256,
+                        "overhead_source": overhead_source,
+                        "overhead_source_sha256": overhead_source_sha256,
+                        "overhead_basis": overhead_basis,
                     }
                 )
+
     output_dir.mkdir(parents=True, exist_ok=True)
-    with (output_dir / "cache_size_ablation_plot_data.csv").open(
-        "w", newline="", encoding="utf-8"
-    ) as handle:
+    output_path = output_dir / "cache_size_ablation_plot_data.csv"
+    with output_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(
             handle,
             lineterminator="\n",
             fieldnames=[
                 "figure",
+                "curve_key",
                 "series",
-                "cache_size_gib",
+                "memory_gib",
+                "source_memory_gib",
+                "memory_overhead_gib",
                 "decode_token_per_s",
+                "status",
+                "budget_kind",
+                "source_budget_kind",
+                "n",
+                "std",
+                "run_id",
                 "source",
+                "source_sha256",
+                "overhead_source",
+                "overhead_source_sha256",
+                "overhead_basis",
             ],
         )
         writer.writeheader()
         writer.writerows(rows)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--figure",
-        choices=["all", *FIGURES],
+        choices=["all", *FIGURE_SERIES],
         default="all",
         help="figure to generate",
     )
     parser.add_argument("--output-dir", type=Path, default=SCRIPT_DIR)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     configure_matplotlib()
     all_series = load_all_series()
-    selected = list(FIGURES) if args.figure == "all" else [args.figure]
+    selected = list(FIGURE_SERIES) if args.figure == "all" else [args.figure]
     for figure_name in selected:
         plot_figure(figure_name, all_series, args.output_dir)
-    write_plot_data(selected, all_series, args.output_dir)
+    # Keep the provenance snapshot complete even when only one image is requested.
+    write_plot_data(list(FIGURE_SERIES), all_series, args.output_dir)
     return 0
 
 
