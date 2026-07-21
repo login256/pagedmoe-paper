@@ -1,12 +1,13 @@
 # Qwen3.5 Fixed4 Absolute Time Breakdown
 
 This figure uses the fixed-4-bit whole-expert Qwen3.5-397B-A17B cache sweep from
-run `qwen35_fixed4_whole_expert_activity_decode500_rerun_20260721_161635`.
+run `qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957`.
 
-The full run contains 499 runtime decode tokens. The plotted absolute wall times
-are measured over decode model tokens 120 through 129, with token 130 providing
-the right boundary. Every stacked bar is measured in `ms/token` and contains four
-mutually exclusive worker-activity buckets:
+Each plotted window contains runtime decode tokens 0 through 499. Runtime token
+500 provides the layer-0 right boundary, and untraced token 501 flushes each
+worker's buffered trace. The boundary and flush tokens are excluded from every
+reported metric. Every stacked bar is measured in `ms/token` over the same 500
+tokens and contains four mutually exclusive worker-activity buckets:
 
 - `Unhidden SSD I/O`: read tasks active without an expert compute task.
 - `Overlapped I/O and computation`: read and expert compute tasks active
@@ -18,13 +19,13 @@ mutually exclusive worker-activity buckets:
 The components sum to the token-cycle wall time. These are host worker-activity
 categories, not pure device service time or a strict model MoE/non-MoE split.
 
-The source CSV also records `full_epoch_hit_rate` from all 499 runtime decode
-tokens and `sample_hit_rate` from the same 10-token window as the bars. Hit rate
-is retained as data rather than plotted on the absolute-time axis. Raw summary,
-logs, and traces are under:
+The source CSV also records `window_tps` and `window_hit_rate` from exactly the
+same 500-token window as the bars. Thus `total_ms_per_token = 1000 / window_tps`.
+Hit rate is retained as data rather than plotted on the absolute-time axis. Raw
+summary, logs, and traces are under:
 
 ```text
-src/target/bench/qwen35_fixed4_whole_expert_activity_decode500_rerun_20260721_161635/
+src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/
 ```
 
 Regenerate all figure formats with:
