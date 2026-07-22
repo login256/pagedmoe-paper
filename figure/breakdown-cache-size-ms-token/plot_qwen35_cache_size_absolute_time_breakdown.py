@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 EXPECTED_CACHE_GIB = tuple(range(4, 49, 4))
+COMPACT_CACHE_GIB = tuple(range(8, 49, 8))
 
 PALETTE = {
     "cpu": "#4C78A8",
@@ -150,12 +151,20 @@ def normalize_svg(path: Path) -> None:
     path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
 
 
-def plot(input_csv: Path, output_stem: Path) -> None:
+def plot(input_csv: Path, output_stem: Path, *, compact: bool = False) -> None:
     configure_matplotlib()
     rows = read_data(input_csv)
+    if compact:
+        rows_by_cache = {row.cache_size_gib: row for row in rows}
+        rows = [rows_by_cache[cache_size] for cache_size in COMPACT_CACHE_GIB]
     x_values = [row.cache_size_gib for row in rows]
 
-    fig, ax = plt.subplots(figsize=(6.0, 3.45))
+    figure_size = (4.0, 2.3) if compact else (6.0, 3.45)
+    bar_width = 3.4 if compact else 1.7
+    x_limits = (4, 52) if compact else (0, 50)
+    x_ticks = list(COMPACT_CACHE_GIB if compact else range(0, 49, 4))
+
+    fig, ax = plt.subplots(figsize=figure_size)
     bottoms = [0.0] * len(rows)
     for field, label, color, hatch in COMPONENTS:
         values = [getattr(row, field) for row in rows]
@@ -163,7 +172,7 @@ def plot(input_csv: Path, output_stem: Path) -> None:
             x_values,
             values,
             bottom=bottoms,
-            width=1.7,
+            width=bar_width,
             color=color,
             hatch=hatch,
             label=label,
@@ -172,9 +181,9 @@ def plot(input_csv: Path, output_stem: Path) -> None:
         )
         bottoms = [bottom + value for bottom, value in zip(bottoms, values)]
 
-    ax.set_xlim(0, 50)
+    ax.set_xlim(*x_limits)
     ax.set_ylim(0, 300)
-    ax.set_xticks(list(range(0, 49, 4)))
+    ax.set_xticks(x_ticks)
     ax.set_yticks(list(range(0, 301, 50)))
     ax.grid(
         axis="y",
@@ -220,16 +229,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-stem",
         type=Path,
-        default=SCRIPT_DIR / "fig_qwen35_cache_size_absolute_time_breakdown",
+        default=None,
+        help="Output path without a suffix (default depends on --compact)",
+    )
+    parser.add_argument(
+        "--compact",
+        action="store_true",
+        help="Plot only the 8, 16, 24, 32, 40, and 48 GiB points",
     )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    plot(args.input_csv, args.output_stem)
+    default_name = "fig_qwen35_cache_size_absolute_time_breakdown"
+    if args.compact:
+        default_name += "_compact"
+    output_stem = args.output_stem or SCRIPT_DIR / default_name
+    plot(args.input_csv, output_stem, compact=args.compact)
     for suffix in (".pdf", ".png", ".svg"):
-        print(f"wrote {args.output_stem.with_suffix(suffix)}")
+        print(f"wrote {output_stem.with_suffix(suffix)}")
     return 0
 
 

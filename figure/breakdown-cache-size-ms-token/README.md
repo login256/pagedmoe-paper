@@ -34,10 +34,20 @@ Regenerate all figure formats with:
 python paper/figure/breakdown-cache-size-ms-token/plot_qwen35_cache_size_absolute_time_breakdown.py
 ```
 
+Generate the compact 4-inch version containing only the 8, 16, 24, 32, 40,
+and 48 GiB points with:
+
+```bash
+python paper/figure/breakdown-cache-size-ms-token/plot_qwen35_cache_size_absolute_time_breakdown.py --compact
+```
+
 Outputs:
 
 ```text
 fig_qwen35_cache_size_absolute_time_breakdown.pdf
 fig_qwen35_cache_size_absolute_time_breakdown.png
 fig_qwen35_cache_size_absolute_time_breakdown.svg
+fig_qwen35_cache_size_absolute_time_breakdown_compact.pdf
+fig_qwen35_cache_size_absolute_time_breakdown_compact.png
+fig_qwen35_cache_size_absolute_time_breakdown_compact.svg
 ```
