@@ -155,7 +155,7 @@ def plot(input_csv: Path, output_stem: Path) -> None:
     rows = read_data(input_csv)
     x_values = [row.cache_size_gib for row in rows]
 
-    fig, ax = plt.subplots(figsize=(4.0, 2.3))
+    fig, ax = plt.subplots(figsize=(6.0, 3.45))
     bottoms = [0.0] * len(rows)
     for field, label, color, hatch in COMPONENTS:
         values = [getattr(row, field) for row in rows]
