@@ -155,7 +155,7 @@ def plot(input_csv: Path, output_stem: Path) -> None:
     rows = read_data(input_csv)
     x_values = [row.cache_size_gib for row in rows]
 
-    fig, ax = plt.subplots(figsize=(5.8, 2.3))
+    fig, ax = plt.subplots(figsize=(4.0, 2.3))
     bottoms = [0.0] * len(rows)
     for field, label, color, hatch in COMPONENTS:
         values = [getattr(row, field) for row in rows]
@@ -188,10 +188,10 @@ def plot(input_csv: Path, output_stem: Path) -> None:
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.set_xlabel("Expert cache capacity (GiB)")
-    ax.set_ylabel("Absolute time (ms/token)")
+    ax.set_ylabel("Time (ms/token)")
     ax.legend(
         loc="lower center",
-        bbox_to_anchor=(0.5, 1.01),
+        bbox_to_anchor=(0.5, 1.08),
         ncol=2,
         frameon=False,
         handlelength=1.45,
