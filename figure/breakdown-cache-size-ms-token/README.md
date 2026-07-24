@@ -21,8 +21,8 @@ categories, not pure device service time or a strict model MoE/non-MoE split.
 
 The source CSV also records `window_tps` and `window_hit_rate` from exactly the
 same 500-token window as the bars. Thus `total_ms_per_token = 1000 / window_tps`.
-Hit rate is plotted separately so that it does not share an axis with the
-absolute-time breakdown. Raw summary, logs, and traces are under:
+Hit rate is available both as a separate figure and on the right axis of an
+optional combined figure. Raw summary, logs, and traces are under:
 
 ```text
 src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/
@@ -48,6 +48,13 @@ with:
 python paper/figure/breakdown-cache-size-ms-token/plot_qwen35_cache_size_hit_rate.py
 ```
 
+Generate a combined dual-axis figure with the timing breakdown on the left axis
+and hit rate on the right axis with:
+
+```bash
+python paper/figure/breakdown-cache-size-ms-token/plot_qwen35_cache_size_time_and_hit_rate.py
+```
+
 Outputs:
 
 ```text
@@ -60,4 +67,7 @@ fig_qwen35_cache_size_absolute_time_breakdown_compact.svg
 fig_qwen35_cache_size_hit_rate_compact.pdf
 fig_qwen35_cache_size_hit_rate_compact.png
 fig_qwen35_cache_size_hit_rate_compact.svg
+fig_qwen35_cache_size_time_and_hit_rate_compact.pdf
+fig_qwen35_cache_size_time_and_hit_rate_compact.png
+fig_qwen35_cache_size_time_and_hit_rate_compact.svg
 ```
