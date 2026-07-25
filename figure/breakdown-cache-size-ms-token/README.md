@@ -55,6 +55,13 @@ and hit rate on the right axis with:
 python paper/figure/breakdown-cache-size-ms-token/plot_qwen35_cache_size_time_and_hit_rate.py
 ```
 
+Generate a stacked two-panel figure with hit rate above the timing breakdown and
+a shared cache-capacity axis with:
+
+```bash
+python paper/figure/breakdown-cache-size-ms-token/plot_qwen35_cache_size_hit_rate_above_time.py
+```
+
 Outputs:
 
 ```text
@@ -70,4 +77,7 @@ fig_qwen35_cache_size_hit_rate_compact.svg
 fig_qwen35_cache_size_time_and_hit_rate_compact.pdf
 fig_qwen35_cache_size_time_and_hit_rate_compact.png
 fig_qwen35_cache_size_time_and_hit_rate_compact.svg
+fig_qwen35_cache_size_hit_rate_above_time_compact.pdf
+fig_qwen35_cache_size_hit_rate_above_time_compact.png
+fig_qwen35_cache_size_hit_rate_above_time_compact.svg
 ```
