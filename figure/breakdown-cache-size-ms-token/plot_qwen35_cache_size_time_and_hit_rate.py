@@ -21,7 +21,7 @@ from plot_qwen35_cache_size_absolute_time_breakdown import (
 )
 
 
-HIT_RATE_COLOR = "#7A5195"
+HIT_RATE_COLOR = "#68616F"
 
 
 def plot(input_csv: Path, output_stem: Path) -> None:
@@ -53,7 +53,7 @@ def plot(input_csv: Path, output_stem: Path) -> None:
         [row.window_hit_rate for row in rows],
         color=HIT_RATE_COLOR,
         linestyle="-",
-        linewidth=1.45,
+        linewidth=1.3,
         marker="o",
         markersize=4.0,
         markerfacecolor=PALETTE["white"],
