@@ -84,7 +84,7 @@ def plot(input_csv: Path, output_stem: Path) -> None:
     ax.spines["top"].set_visible(False)
     ax_hit.spines["top"].set_visible(False)
     ax.set_xlabel("Expert cache capacity (GiB)")
-    ax.set_ylabel("Time (ms/token)")
+    ax.set_ylabel("Decode latency (ms/token)")
     ax_hit.set_ylabel("Expert cache hit rate", color=HIT_RATE_COLOR)
     ax_hit.tick_params(axis="y", colors=HIT_RATE_COLOR)
     ax_hit.spines["right"].set_color(HIT_RATE_COLOR)

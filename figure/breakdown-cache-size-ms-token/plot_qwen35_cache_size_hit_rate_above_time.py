@@ -94,7 +94,7 @@ def plot(input_csv: Path, output_stem: Path) -> None:
     ax_time.set_xticks(COMPACT_CACHE_GIB)
     ax_time.set_yticks(list(range(0, 301, 50)))
     ax_time.set_xlabel("Expert cache capacity (GiB)")
-    ax_time.set_ylabel("Time (ms/token)")
+    ax_time.set_ylabel("Decode latency (ms/token)")
     ax_time.text(0.01, 0.93, "(b)", transform=ax_time.transAxes)
     configure_axis(ax_time)
 

@@ -9,10 +9,10 @@ worker's buffered trace. The boundary and flush tokens are excluded from every
 reported metric. Every stacked bar is measured in `ms/token` over the same 500
 tokens and contains four mutually exclusive worker-activity buckets:
 
-- `Unhidden SSD I/O`: read tasks active without an expert compute task.
-- `Overlapped I/O and computation`: read and expert compute tasks active
-  concurrently.
-- `Expert computation only`: expert compute tasks active without a read task.
+- `Exposed SSD I/O`: read tasks active without an expert compute task.
+- `I/O-computation overlap`: read and expert compute tasks active concurrently.
+- `Non-overlapped expert computation`: expert compute tasks active without a
+  read task.
 - `Other model and runtime work`: neither a read task nor an expert compute task
   active.
 

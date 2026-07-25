@@ -32,14 +32,19 @@ BAR_KWARGS = {
 }
 
 COMPONENTS = (
-    ("ssd_only_ms", "Unhidden SSD I/O", PALETTE["ssd"], "//"),
+    ("ssd_only_ms", "Exposed SSD I/O", PALETTE["ssd"], "//"),
     (
         "ssd_compute_overlap_ms",
-        "Overlapped I/O and computation",
+        "I/O-computation overlap",
         PALETTE["data_movement"],
         "\\\\",
     ),
-    ("compute_only_ms", "Expert computation only", PALETTE["cpu"], ""),
+    (
+        "compute_only_ms",
+        "Non-overlapped expert computation",
+        PALETTE["cpu"],
+        "",
+    ),
     ("other_ms", "Other model and runtime work", PALETTE["other"], ".."),
 )
 
@@ -197,7 +202,7 @@ def plot(input_csv: Path, output_stem: Path, *, compact: bool = False) -> None:
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.set_xlabel("Expert cache capacity (GiB)")
-    ax.set_ylabel("Time (ms/token)")
+    ax.set_ylabel("Decode latency (ms/token)")
     ax.legend(
         loc="lower center",
         bbox_to_anchor=(0.5, 1.08),
