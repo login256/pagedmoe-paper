@@ -1,0 +1,16 @@
+{
+  "export_date": "2026-07-30",
+  "figure_count": 7,
+  "figures": {
+    "glm52_figure1": 42,
+    "glm52_figure2": 36,
+    "qwen35_cache_hit_rate": 40,
+    "qwen35_figure1": 42,
+    "qwen35_figure2": 36,
+    "qwen35_figure3": 46,
+    "qwen35_ssd_traffic": 40
+  },
+  "paper_ref": "fcfecb966bace07c85f3893533d51b9fb89a754b",
+  "paper_revision": "fcfecb966bace07c85f3893533d51b9fb89a754b",
+  "point_count": 282
+}
