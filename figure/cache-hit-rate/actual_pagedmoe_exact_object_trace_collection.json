@@ -1,0 +1,88 @@
+{
+  "collected_at_utc": "2026-07-31",
+  "purpose": "Capture real PagedMoE marginal-gain targets for exact-object cache replay.",
+  "source_revisions": {
+    "repository": "d728c187a26f498148a64c35ebeb4a49790c181e",
+    "src_submodule": "8d76da5d8b93db194c7338f3162c708630f40502",
+    "paper_submodule": "f8a05809ec3836211ab475330b7209caa40c655d"
+  },
+  "trace_library": {
+    "path": "/mnt/test/pagedmoe-trace-target/release/libpagedmoe_capi.so",
+    "sha256": "f4109159732f27764a8d9a077fe5b106ac0205d3005dc6a6fbb1e749943613b9",
+    "build_command": "CFLAGS=-D_GNU_SOURCE cargo build -p pagedmoe-capi --release --features precision_trace --target-dir /mnt/test/pagedmoe-trace-target",
+    "load_method": "absolute LD_PRELOAD; launcher /proc maps audit passed"
+  },
+  "inputs": {
+    "model": {
+      "path": "/mnt/test/Qwen3.5-397B-A17B",
+      "config_sha256": "3ae7fa89c2f7d1354096418ddaf1331e9e0898a8ca11e804fb6dbaa087efb7da"
+    },
+    "expert_storage": {
+      "path": "/mnt/test/qwen35_397b_runtime_full_rust_fixed",
+      "manifest_sha256": "d193f2ae2b2cda5942e63476cc9872ca3d2d24a61c44b8f098477cfdb7b20965"
+    },
+    "expert_bit_gains": {
+      "path": "/mnt/test/qwen35_expert_bit_gains_full_n10_seed_20260513_reprocessed_rel_l2_sq_pairavg_inf1/expert_bit_gains_f64.bin",
+      "sha256": "f2d341db2982e8e0b7ae9dfa16b057b8e81bad1c24fd4ea88ba78e38fbd69964"
+    }
+  },
+  "protocol": {
+    "precision_decider": "marginal_gain",
+    "runtime_precision_cache": "shared bitplanes (repository default)",
+    "runtime_cache_gib": 24,
+    "prompt_tokens": 118,
+    "prompt_sha256": "2d19dbed1abb62f4a18d4396d6a44a12a4f8e9e98a8b8387e6d5bfda5da9b9bb",
+    "completion_tokens": 500,
+    "temperature": 0.0,
+    "random_seed": 1926817,
+    "ignore_eos": true,
+    "compute_threads": 16,
+    "threadpool_count": 1,
+    "codebook_workers": 1,
+    "bitplane_workers": 8,
+    "cuda_graph": true,
+    "top_k": 10,
+    "moe_layers": 60
+  },
+  "cases": {
+    "c4l40": {
+      "compute_avg_bits": 4,
+      "max_load_bits": 40,
+      "trace_path": "/mnt/test/pagedmoe_exact_object_traces_20260731/c4l40_cache24_decode500.server.log",
+      "trace_sha256": "16253e796227272743b244d90fa609a23cb0803b81119e68d6428202e82bc738",
+      "trace_size_bytes": 16621738,
+      "precision_records": 37260,
+      "request_forward_ms": 109787.84,
+      "runtime_read_job_cache_hit_rate": 0.5964
+    },
+    "c3l30": {
+      "compute_avg_bits": 3,
+      "max_load_bits": 30,
+      "trace_path": "/mnt/test/pagedmoe_exact_object_traces_20260731/c3l30_cache24_decode500.server.log",
+      "trace_sha256": "5a7198eb91ea250cf95e6da069bb5897df5a30130bce9573e9469c6d1adc5625",
+      "trace_size_bytes": 16638485,
+      "precision_records": 37260,
+      "request_forward_ms": 83191.17,
+      "runtime_read_job_cache_hit_rate": 0.6590
+    }
+  },
+  "replay": {
+    "script": "simulate_actual_pagedmoe_exact_object_cache_hit_rate.py",
+    "selection": "500 logical output tokens: last prefill route per layer plus 499 complete decode cycles",
+    "selected_layer_records_per_case": 30000,
+    "selected_object_requests_per_case": 300000,
+    "primary_cache_gib": 24,
+    "cache_initial_state": "empty",
+    "cache_policy": "global atomic byte-capacity LRU",
+    "object_key": [
+      "layer",
+      "expert_id",
+      "precision"
+    ]
+  },
+  "caveats": [
+    "The runtime read_job_cache_hit_rate is a shared-bitplane I/O metric, not the simulated exact-object request hit rate.",
+    "Recorded target precisions include feedback from the live shared-bitplane cache and its health-check warmups.",
+    "The c4l40 and c3l30 live generations have different routes; only Fixed4 versus DynAvg4 and Fixed3 versus DynAvg3 are route-matched."
+  ]
+}
