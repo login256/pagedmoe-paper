@@ -7,6 +7,7 @@ import argparse
 import csv
 import hashlib
 import math
+import re
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass
@@ -300,6 +301,9 @@ def read_shared_series(spec: SourceSpec) -> SeriesData:
         "completed_compute_tasks",
     }
     grouped: dict[float, list[float]] = defaultdict(list)
+    repeat_metadata: dict[
+        float, list[tuple[int | None, int | None]]
+    ] = defaultdict(list)
     actual_sha256 = sha256(spec.path)
     if actual_sha256 != spec.expected_sha256:
         raise ValueError(
@@ -343,9 +347,43 @@ def read_shared_series(spec: SourceSpec) -> SeriesData:
         if not math.isfinite(value) or value <= 0:
             raise ValueError(f"{prefix}: invalid decode throughput {value}")
         grouped[memory_gib].append(value)
+        repeat_index_text = row.get("repeat_index", "").strip()
+        repeat_count_text = row.get("repeat_count", "").strip()
+        repeat_metadata[memory_gib].append(
+            (
+                int(repeat_index_text) if repeat_index_text else None,
+                int(repeat_count_text) if repeat_count_text else None,
+            )
+        )
 
     points = aggregate_ok_points(grouped)
     validate_grid(spec.path, points)
+    repeat_counts = {point.n for point in points}
+    if len(repeat_counts) != 1:
+        raise ValueError(
+            f"{spec.path}: inconsistent repeat counts: {sorted(repeat_counts)}"
+        )
+    for memory_gib, metadata in repeat_metadata.items():
+        repeat_indices = [item[0] for item in metadata]
+        declared_counts = [item[1] for item in metadata]
+        if len(metadata) > 1 and all(index is None for index in repeat_indices):
+            raise ValueError(
+                f"{spec.path}: cache={memory_gib:g} missing repeat indices"
+            )
+        if any(index is not None for index in repeat_indices):
+            if any(index is None for index in repeat_indices) or {
+                int(index) for index in repeat_indices if index is not None
+            } != set(range(1, len(metadata) + 1)):
+                raise ValueError(
+                    f"{spec.path}: cache={memory_gib:g} invalid repeat indices"
+                )
+        if any(count is not None for count in declared_counts):
+            if any(count is None for count in declared_counts) or {
+                int(count) for count in declared_counts if count is not None
+            } != {len(metadata)}:
+                raise ValueError(
+                    f"{spec.path}: cache={memory_gib:g} invalid repeat count"
+                )
     return SeriesData(
         points=points,
         source=relative_source(spec.path),
@@ -437,11 +475,28 @@ def read_mmap_series(precision_label: str, expected_bits: float) -> SeriesData:
     observed_grid = tuple(sorted(set(grouped) | set(failures)))
     if observed_grid != EXPECTED_GRID:
         raise ValueError(f"{path}: expected {EXPECTED_GRID}, got {observed_grid}")
-    if failures != {4.0: ["137"]}:
+    if set(failures) != {4.0} or not failures[4.0] or any(
+        code != "137" for code in failures[4.0]
+    ):
         raise ValueError(f"{path}: unexpected {precision_label} failures: {dict(failures)}")
+    if 4.0 in grouped:
+        raise ValueError(
+            f"{path}: {precision_label} has both successful and OOM 4 GiB rows"
+        )
+    repeat_count = len(failures[4.0])
+    invalid_repeat_counts = {
+        memory_gib: len(values)
+        for memory_gib, values in grouped.items()
+        if len(values) != repeat_count
+    }
+    if invalid_repeat_counts:
+        raise ValueError(
+            f"{path}: inconsistent {precision_label} repeat counts: "
+            f"expected {repeat_count}, got {invalid_repeat_counts}"
+        )
 
     points = list(aggregate_ok_points(grouped))
-    points.append(Point(4.0, None, "oom", 0, None))
+    points.append(Point(4.0, None, "oom", repeat_count, None))
     points.sort(key=lambda point: point.memory_gib)
     return SeriesData(
         points=tuple(points),
@@ -518,12 +573,17 @@ def read_ik_llama_series() -> SeriesData:
         rows = list(reader)
 
     grouped: dict[float, list[float]] = defaultdict(list)
+    repeat_ids: dict[float, list[int | None]] = defaultdict(list)
     for row_number, row in enumerate(rows, start=2):
         prefix = f"{path}:{row_number}"
         nominal_gib = float(row["nominal_gib"])
         if row["phase"] != "expert":
             raise ValueError(f"{prefix}: expected expert-budget phase")
-        if row["case_id"] != f"expert_{int(nominal_gib):02d}g":
+        expected_case_prefix = f"expert_{int(nominal_gib):02d}g"
+        repeat_match = re.fullmatch(
+            rf"{re.escape(expected_case_prefix)}_rep(\d+)", row["case_id"]
+        )
+        if row["case_id"] != expected_case_prefix and repeat_match is None:
             raise ValueError(f"{prefix}: case id does not match nominal budget")
         if row["status"] != "success" or row["error"]:
             raise ValueError(f"{prefix}: unsuccessful ik_llama.cpp case")
@@ -553,6 +613,9 @@ def read_ik_llama_series() -> SeriesData:
         if not math.isfinite(value) or value <= 0:
             raise ValueError(f"{prefix}: invalid decode throughput {value}")
         grouped[nominal_gib].append(value)
+        repeat_ids[nominal_gib].append(
+            int(repeat_match.group(1)) if repeat_match is not None else None
+        )
 
     points = aggregate_ok_points(grouped)
     observed_grid = tuple(point.memory_gib for point in points)
@@ -560,8 +623,25 @@ def read_ik_llama_series() -> SeriesData:
         raise ValueError(
             f"{path}: expected grid {IK_LLAMA_EXPECTED_GRID}, got {observed_grid}"
         )
-    if any(point.n != 1 for point in points):
-        raise ValueError(f"{path}: expected exactly one run per expert budget")
+    repeat_counts = {point.n for point in points}
+    if len(repeat_counts) != 1:
+        raise ValueError(f"{path}: inconsistent repeat counts: {sorted(repeat_counts)}")
+    for nominal_gib, identifiers in repeat_ids.items():
+        if len(identifiers) > 1 and all(
+            identifier is None for identifier in identifiers
+        ):
+            raise ValueError(
+                f"{path}: cache={nominal_gib:g} missing repeat identifiers"
+            )
+        if any(identifier is not None for identifier in identifiers):
+            if any(identifier is None for identifier in identifiers) or {
+                int(identifier)
+                for identifier in identifiers
+                if identifier is not None
+            } != set(range(1, len(identifiers) + 1)):
+                raise ValueError(
+                    f"{path}: cache={nominal_gib:g} invalid repeat identifiers"
+                )
     return SeriesData(
         points=points,
         source=relative_source(path),
@@ -577,6 +657,24 @@ def load_all_series() -> dict[str, SeriesData]:
     series["mmap_dynamic2p5"] = read_mmap_series("c2p5l25", 2.5)
     series["ik_llama"] = read_ik_llama_series()
     return series
+
+
+def validate_expected_repeats(
+    all_series: dict[str, SeriesData], expected_repeats: int | None
+) -> None:
+    if expected_repeats is None:
+        return
+    for key, data in all_series.items():
+        mismatches = [
+            (point.memory_gib, point.n)
+            for point in data.points
+            if point.n != expected_repeats
+        ]
+        if mismatches:
+            raise ValueError(
+                f"{key}: expected {expected_repeats} repeats at every point, "
+                f"got {mismatches}"
+            )
 
 
 def draw_series(
@@ -855,10 +953,18 @@ def main(argv: list[str] | None = None) -> int:
         help="figure to generate",
     )
     parser.add_argument("--output-dir", type=Path, default=SCRIPT_DIR)
+    parser.add_argument(
+        "--expected-repeats",
+        type=int,
+        help="Require this many independent runs for every plotted point.",
+    )
     args = parser.parse_args(argv)
+    if args.expected_repeats is not None and args.expected_repeats < 1:
+        parser.error("--expected-repeats must be positive")
 
     configure_matplotlib()
     all_series = load_all_series()
+    validate_expected_repeats(all_series, args.expected_repeats)
     selected = list(FIGURE_SERIES) if args.figure == "all" else [args.figure]
     for figure_name in selected:
         plot_figure(figure_name, all_series, args.output_dir)

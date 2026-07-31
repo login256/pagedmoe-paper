@@ -7,6 +7,8 @@ import argparse
 import csv
 import hashlib
 import math
+import statistics
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -194,8 +196,17 @@ def validate_precision(path: Path, row: dict[str, str], spec: SeriesSpec) -> Non
 
 
 def read_series(
-    shared_csv: Path, naive_csv: Path
-) -> tuple[dict[str, list[tuple[float, float, str]]], dict[str, str]]:
+    shared_csv: Path,
+    naive_csv: Path,
+    expected_shared_repeats: int | None = None,
+    expected_naive_repeats: int | None = None,
+    expected_shared_sha256: str | None = None,
+    expected_naive_sha256: str | None = None,
+    expected_naive_run_id: str | None = None,
+) -> tuple[
+    dict[str, list[tuple[float, float, str, int, float | None]]],
+    dict[str, str],
+]:
     source_rows: dict[str, list[dict[str, str]]] = {}
     for kind, path in (("shared", shared_csv), ("naive", naive_csv)):
         with path.open(newline="", encoding="utf-8") as handle:
@@ -205,7 +216,7 @@ def read_series(
                 raise ValueError(f"{path}: missing column: case")
             source_rows[kind] = list(reader)
 
-    result: dict[str, list[tuple[float, float, str]]] = {}
+    result: dict[str, list[tuple[float, float, str, int, float | None]]] = {}
     for spec in SERIES:
         path = shared_csv if spec.source_kind == "shared" else naive_csv
         rows = source_rows[spec.source_kind]
@@ -214,15 +225,15 @@ def read_series(
         else:
             rows = [row for row in rows if row["precision"] == spec.source_case]
 
-        values: dict[float, tuple[float, str]] = {}
+        values: defaultdict[
+            float, list[tuple[float, str, int | None, int | None]]
+        ] = defaultdict(list)
         for row in rows:
             validate_protocol(path, row)
             validate_precision(path, row, spec)
             cache_size = float(row["cache_size_gib"])
             if cache_size > 48:
                 continue
-            if cache_size in values:
-                raise ValueError(f"{path}: duplicate cache size {cache_size:g}")
             metric = float(row[METRIC])
             if not math.isfinite(metric) or metric <= 0:
                 raise ValueError(
@@ -230,12 +241,19 @@ def read_series(
                 )
             if (
                 spec.source_kind == "naive"
-                and row["run_id"] != EXPECTED_NAIVE_RUN_ID
+                and expected_naive_run_id is not None
+                and row["run_id"] != expected_naive_run_id
             ):
                 raise ValueError(
                     f"{path}: unexpected naive run_id={row['run_id']!r}"
                 )
-            values[cache_size] = (metric, row["run_id"])
+            repeat_text = row.get("repeat_index", "").strip()
+            repeat_index = int(repeat_text) if repeat_text else None
+            repeat_count_text = row.get("repeat_count", "").strip()
+            repeat_count = int(repeat_count_text) if repeat_count_text else None
+            values[cache_size].append(
+                (metric, row["run_id"], repeat_index, repeat_count)
+            )
 
         actual = set(values)
         expected = set(EXPECTED_CACHE_SIZES)
@@ -245,17 +263,80 @@ def read_series(
                 f"missing={sorted(expected - actual)}, "
                 f"unexpected={sorted(actual - expected)}"
             )
-        result[spec.key] = [
-            (cache_size, metric, run_id)
-            for cache_size, (metric, run_id) in sorted(values.items())
-        ]
+        expected_repeats = (
+            expected_shared_repeats
+            if spec.source_kind == "shared"
+            else expected_naive_repeats
+        )
+        points = []
+        for cache_size, samples in sorted(values.items()):
+            if expected_repeats is not None and len(samples) != expected_repeats:
+                raise ValueError(
+                    f"{path}: {spec.key} cache={cache_size:g} has {len(samples)} "
+                    f"repeats, expected {expected_repeats}"
+                )
+            repeat_indices = [sample[2] for sample in samples]
+            if len(samples) > 1 and all(index is None for index in repeat_indices):
+                raise ValueError(
+                    f"{path}: {spec.key} cache={cache_size:g} is missing "
+                    "repeat metadata"
+                )
+            if any(index is not None for index in repeat_indices):
+                if any(index is None for index in repeat_indices):
+                    raise ValueError(
+                        f"{path}: {spec.key} cache={cache_size:g} has incomplete "
+                        "repeat metadata"
+                    )
+                actual_indices = {
+                    int(index) for index in repeat_indices if index is not None
+                }
+                expected_indices = set(range(1, len(samples) + 1))
+                if (
+                    actual_indices != expected_indices
+                    or len(actual_indices) != len(samples)
+                ):
+                    raise ValueError(
+                        f"{path}: {spec.key} cache={cache_size:g} repeat indices "
+                        f"are {sorted(actual_indices)}, expected {sorted(expected_indices)}"
+                    )
+            declared_repeat_counts = [sample[3] for sample in samples]
+            if any(count is not None for count in declared_repeat_counts):
+                if any(count is None for count in declared_repeat_counts):
+                    raise ValueError(
+                        f"{path}: {spec.key} cache={cache_size:g} has incomplete "
+                        "repeat-count metadata"
+                    )
+                actual_counts = {
+                    int(count)
+                    for count in declared_repeat_counts
+                    if count is not None
+                }
+                if actual_counts != {len(samples)}:
+                    raise ValueError(
+                        f"{path}: {spec.key} cache={cache_size:g} declares "
+                        f"repeat counts {sorted(actual_counts)}, expected {len(samples)}"
+                    )
+            metrics = [sample[0] for sample in samples]
+            run_ids = sorted({sample[1] for sample in samples})
+            points.append(
+                (
+                    cache_size,
+                    statistics.fmean(metrics),
+                    ";".join(run_ids),
+                    len(metrics),
+                    statistics.stdev(metrics) if len(metrics) > 1 else None,
+                )
+            )
+        result[spec.key] = points
 
     source_hashes = {"shared": sha256(shared_csv), "naive": sha256(naive_csv)}
     expected_hashes = {
-        "shared": EXPECTED_SHARED_SHA256,
-        "naive": EXPECTED_NAIVE_SHA256,
+        "shared": expected_shared_sha256,
+        "naive": expected_naive_sha256,
     }
     for kind, expected_hash in expected_hashes.items():
+        if expected_hash is None:
+            continue
         if source_hashes[kind] != expected_hash:
             raise ValueError(
                 f"{kind} source hash mismatch: expected={expected_hash} "
@@ -266,7 +347,7 @@ def read_series(
 
 def write_plot_data(
     output_path: Path,
-    values: dict[str, list[tuple[float, float, str]]],
+    values: dict[str, list[tuple[float, float, str, int, float | None]]],
     source_hashes: dict[str, str],
     shared_csv: Path,
     naive_csv: Path,
@@ -274,7 +355,7 @@ def write_plot_data(
     rows = []
     for spec in SERIES:
         source = shared_csv if spec.source_kind == "shared" else naive_csv
-        for cache_size, metric, run_id in values[spec.key]:
+        for cache_size, metric, run_id, repeat_count, stddev in values[spec.key]:
             rows.append(
                 {
                     "curve_key": spec.key,
@@ -282,6 +363,10 @@ def write_plot_data(
                     "backend": spec.backend,
                     "cache_size_gib": f"{cache_size:g}",
                     METRIC: f"{metric:.8f}",
+                    f"{METRIC}_stddev": (
+                        "" if stddev is None else f"{stddev:.8f}"
+                    ),
+                    "repeat_count": repeat_count,
                     "run_id": run_id,
                     # Keep the derived artifact stable across checkout locations.
                     "source": source.name,
@@ -295,10 +380,26 @@ def write_plot_data(
 
 
 def plot(
-    shared_csv: Path, naive_csv: Path, output_dir: Path, plot_data_csv: Path
+    shared_csv: Path,
+    naive_csv: Path,
+    output_dir: Path,
+    plot_data_csv: Path,
+    expected_shared_repeats: int | None = None,
+    expected_naive_repeats: int | None = None,
+    expected_shared_sha256: str | None = None,
+    expected_naive_sha256: str | None = None,
+    expected_naive_run_id: str | None = None,
 ) -> None:
     configure_matplotlib()
-    values, source_hashes = read_series(shared_csv, naive_csv)
+    values, source_hashes = read_series(
+        shared_csv,
+        naive_csv,
+        expected_shared_repeats,
+        expected_naive_repeats,
+        expected_shared_sha256,
+        expected_naive_sha256,
+        expected_naive_run_id,
+    )
 
     fig, ax = plt.subplots(figsize=(3.35, 2.35))
     y_max = 0.0
@@ -385,12 +486,38 @@ def main() -> int:
         type=Path,
         default=SCRIPT_DIR / "glm52_figure2_cache_size_token_s.csv",
     )
+    parser.add_argument("--expected-shared-repeats", type=int)
+    parser.add_argument("--expected-naive-repeats", type=int)
+    parser.add_argument(
+        "--expected-shared-sha256",
+        default=EXPECTED_SHARED_SHA256,
+        help="Expected shared CSV SHA256 (defaults to the frozen paper input).",
+    )
+    parser.add_argument(
+        "--expected-naive-sha256",
+        default=EXPECTED_NAIVE_SHA256,
+        help="Expected independent CSV SHA256 (defaults to the frozen paper input).",
+    )
+    parser.add_argument(
+        "--expected-naive-run-id",
+        default=EXPECTED_NAIVE_RUN_ID,
+        help="Expected independent run ID (defaults to the frozen paper input).",
+    )
     args = parser.parse_args()
+    for name in ("expected_shared_repeats", "expected_naive_repeats"):
+        value = getattr(args, name)
+        if value is not None and value < 1:
+            parser.error(f"--{name.replace('_', '-')} must be positive")
     plot(
         args.shared_summary_csv,
         args.naive_summary_csv,
         args.output_dir,
         args.plot_data_csv,
+        args.expected_shared_repeats,
+        args.expected_naive_repeats,
+        args.expected_shared_sha256,
+        args.expected_naive_sha256,
+        args.expected_naive_run_id,
     )
     return 0
 

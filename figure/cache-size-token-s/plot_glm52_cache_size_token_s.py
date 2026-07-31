@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import csv
+import math
+import statistics
 from collections import defaultdict
 from pathlib import Path
 
@@ -93,10 +95,53 @@ def configure_matplotlib() -> None:
     )
 
 
+def aggregate_repeat_samples(
+    context: str,
+    samples: list[tuple[float, int | None, int | None]],
+    expected_repeats: int | None,
+) -> tuple[float, int, float | None]:
+    if expected_repeats is not None and len(samples) != expected_repeats:
+        raise ValueError(
+            f"{context} has {len(samples)} repeats, expected {expected_repeats}"
+        )
+    repeat_indices = [sample[1] for sample in samples]
+    repeat_counts = [sample[2] for sample in samples]
+    if (len(samples) > 1 or (expected_repeats or 1) > 1) and all(
+        index is None for index in repeat_indices
+    ):
+        raise ValueError(f"{context} is missing repeat indices")
+    if any(index is not None for index in repeat_indices):
+        if any(index is None for index in repeat_indices) or {
+            int(index) for index in repeat_indices if index is not None
+        } != set(range(1, len(samples) + 1)):
+            raise ValueError(f"{context} has invalid repeat indices")
+    if any(count is not None for count in repeat_counts):
+        if any(count is None for count in repeat_counts) or {
+            int(count) for count in repeat_counts if count is not None
+        } != {len(samples)}:
+            raise ValueError(f"{context} has invalid repeat count")
+    elif len(samples) > 1 or (expected_repeats or 1) > 1:
+        raise ValueError(f"{context} is missing repeat count")
+    values = [sample[0] for sample in samples]
+    if any(not math.isfinite(value) or value <= 0 for value in values):
+        raise ValueError(f"{context} has invalid throughput")
+    return (
+        statistics.fmean(values),
+        len(values),
+        statistics.stdev(values) if len(values) > 1 else None,
+    )
+
+
 def read_summary(
-    summary_csv: Path, ik_summary_csv: Path, metric: str
-) -> dict[str, list[tuple[float, float]]]:
-    values_by_case: dict[str, defaultdict[float, list[float]]] = {
+    summary_csv: Path,
+    ik_summary_csv: Path,
+    metric: str,
+    expected_pagedmoe_repeats: int | None = None,
+    expected_ik_repeats: int | None = None,
+) -> dict[str, list[tuple[float, float, int, float | None]]]:
+    values_by_case: dict[
+        str, defaultdict[float, list[tuple[float, int | None, int | None]]]
+    ] = {
         spec["case"]: defaultdict(list)
         for spec in SERIES
         if spec["source"] == "pagedmoe"
@@ -113,10 +158,18 @@ def read_summary(
                 continue
             cache_size = float(row["cache_size_gib"])
             if cache_size <= 48:
-                values_by_case[case][cache_size].append(float(row[metric]))
+                repeat_index_text = row.get("repeat_index", "").strip()
+                repeat_count_text = row.get("repeat_count", "").strip()
+                values_by_case[case][cache_size].append(
+                    (
+                        float(row[metric]),
+                        int(repeat_index_text) if repeat_index_text else None,
+                        int(repeat_count_text) if repeat_count_text else None,
+                    )
+                )
 
     expected = set(EXPECTED_CACHE_SIZES)
-    result: dict[str, list[tuple[float, float]]] = {}
+    result: dict[str, list[tuple[float, float, int, float | None]]] = {}
     for case, values_by_cache in values_by_case.items():
         actual = set(values_by_cache)
         if actual != expected:
@@ -124,12 +177,26 @@ def read_summary(
                 f"{case} cache grid mismatch: missing={sorted(expected - actual)}, "
                 f"unexpected={sorted(actual - expected)}"
             )
-        result[case] = [
-            (cache_size, sum(values) / len(values))
-            for cache_size, values in sorted(values_by_cache.items())
-        ]
+        points = []
+        for cache_size, samples in sorted(values_by_cache.items()):
+            mean, count, stddev = aggregate_repeat_samples(
+                f"{case} cache={cache_size:g}",
+                samples,
+                expected_pagedmoe_repeats,
+            )
+            points.append(
+                (
+                    cache_size,
+                    mean,
+                    count,
+                    stddev,
+                )
+            )
+        result[case] = points
 
-    ik_values: dict[float, float] = {}
+    ik_values: defaultdict[
+        float, list[tuple[float, int | None, int | None]]
+    ] = defaultdict(list)
     with ik_summary_csv.open(newline="") as handle:
         reader = csv.DictReader(handle)
         required = {
@@ -150,8 +217,6 @@ def read_summary(
             if row["case"] != IK_CASE or row["status"] != "ok":
                 continue
             cache_size = float(row["cache_size_gib"])
-            if cache_size in ik_values:
-                raise ValueError(f"duplicate ik_llama cache size: {cache_size}")
             if int(row["decode_phase_tokens"]) != 499:
                 raise ValueError(f"invalid ik_llama decode window at {cache_size} GiB")
             if row["output_sha256"] != EXPECTED_IK_OUTPUT_SHA256:
@@ -162,7 +227,15 @@ def read_summary(
                     f"ik_llama routed residency differs from {cache_size} GiB by "
                     f"more than 0.5 GiB: {actual_routed}"
                 )
-            ik_values[cache_size] = float(row["decode_token_per_s"])
+            repeat_index_text = row.get("repeat_index", "").strip()
+            repeat_count_text = row.get("repeat_count", "").strip()
+            ik_values[cache_size].append(
+                (
+                    float(row["decode_token_per_s"]),
+                    int(repeat_index_text) if repeat_index_text else None,
+                    int(repeat_count_text) if repeat_count_text else None,
+                )
+            )
 
     expected_ik = set(EXPECTED_IK_CACHE_SIZES)
     actual_ik = set(ik_values)
@@ -172,22 +245,46 @@ def read_summary(
             f"missing={sorted(expected_ik - actual_ik)}, "
             f"unexpected={sorted(actual_ik - expected_ik)}"
         )
-    result[IK_CASE] = sorted(ik_values.items())
+    ik_points = []
+    for cache_size, samples in sorted(ik_values.items()):
+        mean, count, stddev = aggregate_repeat_samples(
+            f"ik_llama cache={cache_size:g}", samples, expected_ik_repeats
+        )
+        ik_points.append(
+            (
+                cache_size,
+                mean,
+                count,
+                stddev,
+            )
+        )
+    result[IK_CASE] = ik_points
     return result
 
 
 def plot(
-    summary_csv: Path, ik_summary_csv: Path, output_stem: Path, metric: str
+    summary_csv: Path,
+    ik_summary_csv: Path,
+    output_stem: Path,
+    metric: str,
+    expected_pagedmoe_repeats: int | None = None,
+    expected_ik_repeats: int | None = None,
 ) -> None:
     configure_matplotlib()
-    series = read_summary(summary_csv, ik_summary_csv, metric)
+    series = read_summary(
+        summary_csv,
+        ik_summary_csv,
+        metric,
+        expected_pagedmoe_repeats,
+        expected_ik_repeats,
+    )
 
     fig, ax = plt.subplots(figsize=(3.35, 2.35))
     y_max = 0.0
     for spec in SERIES:
         values = series[spec["case"]]
-        x_values = [cache_size for cache_size, _ in values]
-        y_values = [tokens_per_s for _, tokens_per_s in values]
+        x_values = [point[0] for point in values]
+        y_values = [point[1] for point in values]
         y_max = max(y_max, *y_values)
         ax.plot(
             x_values,
@@ -274,8 +371,21 @@ def main() -> int:
             "retained only for audits."
         ),
     )
+    parser.add_argument("--expected-pagedmoe-repeats", type=int)
+    parser.add_argument("--expected-ik-repeats", type=int)
     args = parser.parse_args()
-    plot(args.summary_csv, args.ik_summary_csv, args.output_stem, args.metric)
+    for name in ("expected_pagedmoe_repeats", "expected_ik_repeats"):
+        value = getattr(args, name)
+        if value is not None and value < 1:
+            parser.error(f"--{name.replace('_', '-')} must be positive")
+    plot(
+        args.summary_csv,
+        args.ik_summary_csv,
+        args.output_stem,
+        args.metric,
+        args.expected_pagedmoe_repeats,
+        args.expected_ik_repeats,
+    )
     return 0
 
 

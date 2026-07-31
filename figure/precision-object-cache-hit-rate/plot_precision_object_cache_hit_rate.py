@@ -12,7 +12,8 @@ import argparse
 import csv
 import math
 import re
-from collections import OrderedDict
+import statistics
+from collections import OrderedDict, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -164,6 +165,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-cache-gib", type=int, default=MIN_CACHE_GIB)
     parser.add_argument("--max-cache-gib", type=int, default=MAX_CACHE_GIB)
     parser.add_argument("--cache-step-gib", type=int, default=CACHE_STEP_GIB)
+    parser.add_argument(
+        "--expected-repeats",
+        type=int,
+        help="Require this many runtime measurements per case/cache point.",
+    )
     return parser.parse_args()
 
 
@@ -277,21 +283,80 @@ def simulate_cache_sweep(
 def read_summary_series(
     summary_csv: Path,
     cases: tuple[str, ...],
+    expected_cache_gibs: tuple[int, ...] | None = None,
+    expected_repeats: int | None = None,
 ) -> dict[str, list[tuple[int, float]]]:
-    series: dict[str, list[tuple[int, float]]] = {case: [] for case in cases}
+    samples: dict[
+        str, defaultdict[int, list[tuple[float, int | None, int | None]]]
+    ] = {
+        case: defaultdict(list) for case in cases
+    }
     with summary_csv.open(newline="", encoding="utf-8") as handle:
         for row in csv.DictReader(handle):
             case = row["case"]
-            if case not in series or row.get("status") != "ok":
+            if case not in samples or row.get("status") != "ok":
                 continue
             cache_gib = int(float(row["cache_size_gib"]))
             hit_rate = float(row["read_job_cache_hit_rate"])
-            series[case].append((cache_gib, hit_rate))
+            repeat_index_text = row.get("repeat_index", "").strip()
+            repeat_count_text = row.get("repeat_count", "").strip()
+            samples[case][cache_gib].append(
+                (
+                    hit_rate,
+                    int(repeat_index_text) if repeat_index_text else None,
+                    int(repeat_count_text) if repeat_count_text else None,
+                )
+            )
 
-    for case, values in series.items():
-        if not values:
+    series: dict[str, list[tuple[int, float]]] = {}
+    observed_sample_counts: set[int] = set()
+    for case, values_by_cache in samples.items():
+        if not values_by_cache:
             raise ValueError(f"missing case={case} in {summary_csv}")
-        values.sort()
+        if expected_cache_gibs is not None and set(values_by_cache) != set(
+            expected_cache_gibs
+        ):
+            raise ValueError(
+                f"case={case} cache grid mismatch: expected={expected_cache_gibs}, "
+                f"actual={tuple(sorted(values_by_cache))}"
+            )
+        points = []
+        for cache_gib, values in sorted(values_by_cache.items()):
+            observed_sample_counts.add(len(values))
+            repeat_indices = [value[1] for value in values]
+            repeat_counts = [value[2] for value in values]
+            if len(values) > 1 and all(index is None for index in repeat_indices):
+                raise ValueError(
+                    f"case={case} cache={cache_gib}: missing repeat indices"
+                )
+            if any(index is not None for index in repeat_indices):
+                if any(index is None for index in repeat_indices) or {
+                    int(index) for index in repeat_indices if index is not None
+                } != set(range(1, len(values) + 1)):
+                    raise ValueError(
+                        f"case={case} cache={cache_gib}: invalid repeat indices"
+                    )
+            if any(count is not None for count in repeat_counts):
+                if any(count is None for count in repeat_counts) or {
+                    int(count) for count in repeat_counts if count is not None
+                } != {len(values)}:
+                    raise ValueError(
+                        f"case={case} cache={cache_gib}: invalid repeat count"
+                    )
+            points.append(
+                (cache_gib, statistics.fmean(value[0] for value in values))
+            )
+        series[case] = points
+    if len(observed_sample_counts) != 1:
+        raise ValueError(
+            f"inconsistent repeat counts in {summary_csv}: "
+            f"{sorted(observed_sample_counts)}"
+        )
+    if expected_repeats is not None and observed_sample_counts != {expected_repeats}:
+        raise ValueError(
+            f"expected {expected_repeats} repeats in {summary_csv}, "
+            f"got {sorted(observed_sample_counts)}"
+        )
     return series
 
 
@@ -516,6 +581,7 @@ def run_spec(
     min_cache_gib: int,
     max_cache_gib: int,
     cache_step_gib: int,
+    expected_repeats: int | None,
 ) -> None:
     accesses, trace_stats = parse_trace(spec.trace_path)
     sim_results = simulate_cache_sweep(
@@ -527,6 +593,8 @@ def run_spec(
     summary_series = read_summary_series(
         summary_csv,
         (spec.dynamic_case, spec.static_case),
+        tuple(range(min_cache_gib, max_cache_gib + 1, cache_step_gib)),
+        expected_repeats,
     )
 
     write_simulation_csv(output_dir / spec.simulated_csv, spec, sim_results)
@@ -561,6 +629,8 @@ def run_spec(
 
 def main() -> int:
     args = parse_args()
+    if args.expected_repeats is not None and args.expected_repeats < 1:
+        raise ValueError("--expected-repeats must be positive")
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     summary_csv = args.summary_csv.resolve()
@@ -574,6 +644,7 @@ def main() -> int:
             args.min_cache_gib,
             args.max_cache_gib,
             args.cache_step_gib,
+            args.expected_repeats,
         )
     return 0
 
