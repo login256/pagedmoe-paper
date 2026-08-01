@@ -1,41 +1,41 @@
 series,cache_gib,hit_rate,source
-Uniform 4-bit,8,0.43540000,logs/qwen35_breakdown_combined_20260701/summary.md
-Uniform 4-bit,16,0.54150000,logs/qwen35_breakdown_combined_20260701/summary.md
-Uniform 4-bit,24,0.61160000,logs/qwen35_breakdown_combined_20260701/summary.md
-Uniform 4-bit,32,0.68070000,logs/qwen35_breakdown_combined_20260701/summary.md
-Uniform 4-bit,40,0.72570000,logs/qwen35_breakdown_combined_20260701/summary.md
-Uniform 4-bit,48,0.76630000,logs/qwen35_breakdown_combined_20260701/summary.md
-Uniform 4-bit,56,0.79830000,logs/qwen35_breakdown_combined_20260701/summary.md
-Uniform 4-bit,64,0.82410000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 4-bit,8,0.42490000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit,16,0.53070000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit,24,0.59980000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit,32,0.64920000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit,40,0.70080000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit,48,0.73980000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit,56,0.77830000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit,64,0.81090000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit w/o Prefix Reuse,8,0.27714984,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit w/o Prefix Reuse,16,0.35320033,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit w/o Prefix Reuse,24,0.40091748,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit w/o Prefix Reuse,32,0.43883279,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit w/o Prefix Reuse,40,0.47666667,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit w/o Prefix Reuse,48,0.50720684,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit w/o Prefix Reuse,56,0.53340391,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 4-bit w/o Prefix Reuse,64,0.56410695,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
-Dynamic Avg 2.5-bit,8,0.49260000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit,16,0.60170000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit,24,0.68500000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit,32,0.73920000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit,40,0.78740000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit,48,0.82450000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit,56,0.85300000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit,64,0.87520000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit w/o Prefix Reuse,8,0.33120000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit w/o Prefix Reuse,16,0.40990000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit w/o Prefix Reuse,24,0.47940000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit w/o Prefix Reuse,32,0.53290000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit w/o Prefix Reuse,40,0.57040000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit w/o Prefix Reuse,48,0.60400000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit w/o Prefix Reuse,56,0.63870000,logs/qwen35_breakdown_combined_20260701/summary.md
-Dynamic Avg 2.5-bit w/o Prefix Reuse,64,0.66800000,logs/qwen35_breakdown_combined_20260701/summary.md
+Uniform4,8,0.43540000,logs/qwen35_breakdown_combined_20260701/summary.md
+Uniform4,16,0.54150000,logs/qwen35_breakdown_combined_20260701/summary.md
+Uniform4,24,0.61160000,logs/qwen35_breakdown_combined_20260701/summary.md
+Uniform4,32,0.68070000,logs/qwen35_breakdown_combined_20260701/summary.md
+Uniform4,40,0.72570000,logs/qwen35_breakdown_combined_20260701/summary.md
+Uniform4,48,0.76630000,logs/qwen35_breakdown_combined_20260701/summary.md
+Uniform4,56,0.79830000,logs/qwen35_breakdown_combined_20260701/summary.md
+Uniform4,64,0.82410000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg4,8,0.42490000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4,16,0.53070000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4,24,0.59980000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4,32,0.64920000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4,40,0.70080000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4,48,0.73980000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4,56,0.77830000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4,64,0.81090000,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4 (Independent),8,0.27714984,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4 (Independent),16,0.35320033,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4 (Independent),24,0.40091748,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4 (Independent),32,0.43883279,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4 (Independent),40,0.47666667,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4 (Independent),48,0.50720684,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4 (Independent),56,0.53340391,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg4 (Independent),64,0.56410695,paper/figure/precision-object-cache-hit-rate/precision_object_cache_hit_rate_plot_series.csv
+Dyn Avg2.5,8,0.49260000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5,16,0.60170000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5,24,0.68500000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5,32,0.73920000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5,40,0.78740000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5,48,0.82450000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5,56,0.85300000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5,64,0.87520000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5 (Independent),8,0.33120000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5 (Independent),16,0.40990000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5 (Independent),24,0.47940000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5 (Independent),32,0.53290000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5 (Independent),40,0.57040000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5 (Independent),48,0.60400000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5 (Independent),56,0.63870000,logs/qwen35_breakdown_combined_20260701/summary.md
+Dyn Avg2.5 (Independent),64,0.66800000,logs/qwen35_breakdown_combined_20260701/summary.md

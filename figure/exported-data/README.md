@@ -34,6 +34,7 @@
 
 CSV 是规范数据；XLSX 仅用于查看和交付。`raw/` 保留绘图器读取的完整输入，
 逐图 CSV 则只保留图上真正可见的数据点，并增加统一 provenance 字段。
+规范 CSV 的 `series` 使用当前统一名称；`raw/` 中的历史名称按来源快照原样保留。
 
 ## 版本身份
 
@@ -65,12 +66,12 @@ figure/cache-size-token-s/fig_cache_size_end_to_end_throughput.{pdf,png}
 
 | 曲线 | 实际实验 | x 网格 | 点数 |
 |---|---|---|---:|
-| ik_llama.cpp UD-IQ4_XS | routed-expert mmap budget | 8..48，步进 8 | 6 |
-| Uniform 4-bit | shared-bitplane `static4`，top-10 固定 4 bit | 4..48，步进 4 | 12 |
-| Dynamic Avg 4-bit | shared-bitplane gain-based `c4l40` | 4..48，步进 4 | 12 |
-| Dynamic Avg 2.5-bit | shared-bitplane gain-based `c2p5l25` | 4..48，步进 4 | 12 |
+| ik_llama IQ4 | routed-expert mmap budget | 8..48，步进 8 | 6 |
+| Uniform4 | shared-bitplane `static4`，top-10 固定 4 bit | 4..48，步进 4 | 12 |
+| Dyn Avg4 | shared-bitplane gain-based `c4l40` | 4..48，步进 4 | 12 |
+| Dyn Avg2.5 | shared-bitplane gain-based `c2p5l25` | 4..48，步进 4 | 12 |
 
-`Uniform 4-bit` 是固定 4-bit `static4`，不是 `c4l40`。当前 ik_llama 曲线是
+`Uniform4` 是固定 4-bit `static4`，不是 `c4l40`。当前 ik_llama 曲线是
 实测 `UD-IQ4_XS`，不是旧图中的手工 Q4_0 数据。
 
 PagedMoE 三条曲线取 server log 中 480-token decode window；ik_llama 取
@@ -92,13 +93,13 @@ figure/cache-size-token-s/fig_cache_size_independent_precision_comparison.{pdf,p
 
 | 曲线 | backend/policy | 点数 |
 |---|---|---:|
-| Uniform 4-bit | shared-bitplane `static4` | 12 |
-| Dynamic Avg 2.5-bit (independent) | independent-precision `c2p5l25` | 12 |
-| Dynamic Avg 2.5-bit | shared-bitplane `c2p5l25` | 12 |
+| Uniform4 | shared-bitplane `static4` | 12 |
+| Dyn Avg2.5 (Independent) | independent-precision `c2p5l25` | 12 |
+| Dyn Avg2.5 | shared-bitplane `c2p5l25` | 12 |
 
-`independent-precision` 比旧名称 `w/o Prefix Reuse` 更准确。该实验不仅让 cache
-key 包含 precision，也改变 selector 可见的当前 cache hint，因此不能把全部差异
-严格解释为只关闭 bitplane prefix reuse。
+`(Independent)` 表示 independent-precision backend。该实验不仅让 cache key
+包含 precision，也改变 selector 可见的当前 cache hint，因此不能把全部差异严格
+解释为只关闭 bitplane prefix reuse。
 
 ## Qwen3.5 Figure 3
 
@@ -113,10 +114,10 @@ x 轴为 `Total Memory (GiB)`。
 
 | 曲线 | x 口径 | 点数 |
 |---|---|---:|
-| Uniform 4-bit (shared-bitplane) | cache capacity + 5.2 GiB | 12 |
-| Dynamic Avg 2.5-bit (shared-bitplane) | cache capacity + 5.2 GiB | 12 |
-| Uniform 4-bit (mmap backend) | cgroup `MemoryMax` | 11 |
-| Dynamic Avg 2.5-bit (mmap backend) | cgroup `MemoryMax` | 11 |
+| Uniform4 | cache capacity + 5.2 GiB | 12 |
+| Dyn Avg2.5 | cache capacity + 5.2 GiB | 12 |
+| Uniform4 (mmap) | cgroup `MemoryMax` | 11 |
+| Dyn Avg2.5 (mmap) | cgroup `MemoryMax` | 11 |
 
 shared x 为 9.2, 13.2, ..., 53.2 GiB。5.2 GiB 是论文指定的固定近似值，
 来自 `final_non_pool_pss_exact` 三个样本 5.2104/5.2796/5.3646 GiB；它不是
@@ -141,14 +142,14 @@ fraction，绘图时乘 100 显示百分比。
 
 | 曲线 | 数据性质 |
 |---|---|
-| Uniform 4-bit | runtime shared-bitplane counter |
-| Dynamic Avg 4-bit | runtime shared-bitplane counter |
-| Dynamic Avg 4-bit w/o Prefix Reuse | **precision trace 上的 exact-object LRU simulation** |
-| Dynamic Avg 2.5-bit | runtime shared-bitplane counter |
-| Dynamic Avg 2.5-bit w/o Prefix Reuse | runtime independent-precision counter |
+| Uniform4 | runtime shared-bitplane counter |
+| Dyn Avg4 | runtime shared-bitplane counter |
+| Dyn Avg4 (Independent) | **precision trace 上的 exact-object LRU simulation** |
+| Dyn Avg2.5 | runtime shared-bitplane counter |
+| Dyn Avg2.5 (Independent) | runtime independent-precision counter |
 
-因此这张图并非五条曲线全部来自同一个 runtime counter。特别是 Dynamic Avg
-4-bit w/o Prefix Reuse 以 `(layer, expert, precision)` 为独立对象进行 LRU 模拟；
+因此这张图并非五条曲线全部来自同一个 runtime counter。特别是 Dyn Avg
+Avg4 (Independent) 以 `(layer, expert, precision)` 为独立对象进行 LRU 模拟；
 其 `data_kind` 明确为 `simulated_lru`。原模拟的 4-GiB 步进完整数据也保存在
 `raw/qwen35_precision_object_cache_hit_rate_simulated.csv`。
 
@@ -179,7 +180,7 @@ SSD bytes/token
 图中的 GiB/token 再除以 `2^30`。每行保留 `hit_rate`、`miss_rate`、`avg_bits`、
 `moe_layers`、`experts_per_token`、`bitplanes_per_token`、`bitplane_bytes` 和未换算的
 `ssd_transfer_bytes_per_token`。所有行的 `data_kind` 都是
-`analytically_derived`。Dynamic Avg 4-bit w/o Prefix Reuse 的输入 hit rate 还是
+`analytically_derived`。Dyn Avg4 (Independent) 的输入 hit rate 还是
 上述模拟值，其余四条使用 runtime hit-rate 输入。
 
 ## GLM-5.2 Figure 1
@@ -192,10 +193,10 @@ paper/figure/cache-size-token-s/fig_cache_size_token_s_glm52.{pdf,png}
 
 | 曲线 | 实际实验 | x 网格 | 点数 |
 |---|---|---|---:|
-| ik_llama.cpp UD-IQ4_XS | routed-expert mmap budget | 8..48，步进 8 | 6 |
-| Uniform 4-bit | shared-bitplane `static4` | 4..48，步进 4 | 12 |
-| Dynamic Avg 4-bit | shared-bitplane `c4l32` | 4..48，步进 4 | 12 |
-| Dynamic Avg 2.5-bit | shared-bitplane `c2p5l20` | 4..48，步进 4 | 12 |
+| ik_llama IQ4 | routed-expert mmap budget | 8..48，步进 8 | 6 |
+| Uniform4 | shared-bitplane `static4` | 4..48，步进 4 | 12 |
+| Dyn Avg4 | shared-bitplane `c4l32` | 4..48，步进 4 | 12 |
+| Dyn Avg2.5 | shared-bitplane `c2p5l20` | 4..48，步进 4 | 12 |
 
 GLM 每 token 路由 top-8，所以平均 4-bit/2.5-bit 的总 bit budget 分别是 32/20。
 PagedMoE y 使用 streamed response 中第 1 到第 500 completion event 之间的 499
@@ -217,9 +218,9 @@ fig_cache_size_independent_precision_comparison_glm52.{pdf,png}
 
 | 曲线 | backend/policy | 点数 |
 |---|---|---:|
-| Uniform 4-bit | shared-bitplane `static4` | 12 |
-| Dynamic Avg 2.5-bit (independent) | independent-precision `c2p5l20` | 12 |
-| Dynamic Avg 2.5-bit | shared-bitplane `c2p5l20` | 12 |
+| Uniform4 | shared-bitplane `static4` | 12 |
+| Dyn Avg2.5 (Independent) | independent-precision `c2p5l20` | 12 |
+| Dyn Avg2.5 | shared-bitplane `c2p5l20` | 12 |
 
 shared 两条曲线复用 2026-07-25 Figure 1 数据，independent 曲线测试于
 2026-07-30。已有同日 4/24/48 GiB control 表明 shared 公共路径的两个 C ABI

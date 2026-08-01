@@ -30,7 +30,7 @@ DEFAULT_BITWIDTHS = (3.5, 3.0, 2.5, 2.0)
 METHOD_ORDER = ("all", "candidate_oracle", "routing_weight_aware")
 METHOD_LABELS = {
     "all": "uniform",
-    "candidate_oracle": "Candidate Oracle",
+    "candidate_oracle": "candidate-set best",
     "routing_weight_aware": "Routing-Weight Aware",
 }
 METHOD_COLORS = {
@@ -277,7 +277,11 @@ def configure_matplotlib() -> None:
     q4.configure_matplotlib()
     plt.rcParams.update(
         {
-            "legend.fontsize": 9,
+            "font.size": 13,
+            "axes.labelsize": 13,
+            "xtick.labelsize": 12,
+            "ytick.labelsize": 12,
+            "legend.fontsize": 12,
             "hatch.linewidth": 0.45,
         }
     )
@@ -342,7 +346,7 @@ def plot_grouped_summary(path_stem: Path, summary_rows: list[dict[str, object]])
                 f"{value:.1f}",
                 ha="center",
                 va="bottom",
-                fontsize=7.3,
+                fontsize=8.3,
                 color="#333333",
             )
 
@@ -363,7 +367,7 @@ def plot_grouped_summary(path_stem: Path, summary_rows: list[dict[str, object]])
     ax.spines["right"].set_visible(False)
     ax.legend(
         loc="upper center",
-        bbox_to_anchor=(0.5, 1.13),
+        bbox_to_anchor=(0.5, 1.20),
         ncol=3,
         frameon=False,
         handlelength=1.4,

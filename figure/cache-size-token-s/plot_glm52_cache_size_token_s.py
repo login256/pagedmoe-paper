@@ -23,9 +23,9 @@ EXPECTED_IK_OUTPUT_SHA256 = (
 )
 
 PALETTE = {
-    "ours": "#D55E00",
-    "strong_baseline": "#0072B2",
-    "static": "#999999",
+    "dynamic2p5": "#D55E00",
+    "dynamic4": "#009E73",
+    "uniform4": "#0072B2",
     "black": "#000000",
     "light_gray": "#DDDDDD",
     "white": "#FFFFFF",
@@ -34,7 +34,7 @@ PALETTE = {
 SERIES = (
     {
         "case": IK_CASE,
-        "label": "ik_llama.cpp UD-IQ4_XS",
+        "label": "ik_llama IQ4",
         "color": PALETTE["black"],
         "linestyle": "-.",
         "marker": "^",
@@ -42,24 +42,24 @@ SERIES = (
     },
     {
         "case": "static4",
-        "label": "Uniform 4-bit",
-        "color": PALETTE["static"],
-        "linestyle": ":",
+        "label": "Uniform4",
+        "color": PALETTE["uniform4"],
+        "linestyle": "-",
         "marker": "s",
         "source": "pagedmoe",
     },
     {
         "case": "c4l32",
-        "label": "Dynamic Avg 4-bit",
-        "color": PALETTE["strong_baseline"],
-        "linestyle": "--",
+        "label": "Dyn Avg4",
+        "color": PALETTE["dynamic4"],
+        "linestyle": "-",
         "marker": "o",
         "source": "pagedmoe",
     },
     {
         "case": "c2p5l20",
-        "label": "Dynamic Avg 2.5-bit",
-        "color": PALETTE["ours"],
+        "label": "Dyn Avg2.5",
+        "color": PALETTE["dynamic2p5"],
         "linestyle": "-",
         "marker": "D",
         "source": "pagedmoe",
@@ -73,7 +73,7 @@ def configure_matplotlib() -> None:
             "font.family": "serif",
             "font.serif": ["Linux Libertine O", "Libertinus Serif", "STIXGeneral"],
             "font.size": 12,
-            "axes.labelsize": 12,
+            "axes.labelsize": 10,
             "axes.linewidth": 0.8,
             "xtick.labelsize": 11,
             "ytick.labelsize": 11,
@@ -83,14 +83,14 @@ def configure_matplotlib() -> None:
             "ytick.major.size": 3,
             "xtick.major.width": 0.7,
             "ytick.major.width": 0.7,
-            "legend.fontsize": 7.2,
+            "legend.fontsize": 7.5,
             "pdf.fonttype": 42,
             "ps.fonttype": 42,
             "figure.facecolor": PALETTE["white"],
             "axes.facecolor": PALETTE["white"],
             "savefig.dpi": 300,
-            "savefig.bbox": "tight",
-            "savefig.pad_inches": 0.02,
+            "savefig.bbox": None,
+            "savefig.pad_inches": 0.04,
         }
     )
 
@@ -279,7 +279,7 @@ def plot(
         expected_ik_repeats,
     )
 
-    fig, ax = plt.subplots(figsize=(3.35, 2.35))
+    fig, ax = plt.subplots(figsize=(3.35, 2.10))
     y_max = 0.0
     for spec in SERIES:
         values = series[spec["case"]]
@@ -319,11 +319,11 @@ def plot(
     ax.set_xlabel("Cache size (GiB)")
     ax.set_ylabel("Decode throughput (token/s)")
     ax.legend(
-        loc="lower center",
-        bbox_to_anchor=(0.5, 1.01),
+        loc="upper left",
+        bbox_to_anchor=(0.01, 0.99),
         ncol=2,
         frameon=False,
-        handlelength=1.5,
+        handlelength=2.2,
         columnspacing=0.65,
         handletextpad=0.35,
         borderaxespad=0.0,
@@ -331,12 +331,12 @@ def plot(
 
     output_stem.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout(pad=0.45)
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom - 0.02)
     fig.savefig(
         output_stem.with_suffix(".pdf"),
-        bbox_inches="tight",
         metadata={"CreationDate": None, "ModDate": None},
     )
-    fig.savefig(output_stem.with_suffix(".png"), dpi=300, bbox_inches="tight")
+    fig.savefig(output_stem.with_suffix(".png"), dpi=300)
     plt.close(fig)
 
 

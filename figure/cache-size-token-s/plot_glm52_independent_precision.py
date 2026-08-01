@@ -53,7 +53,7 @@ class SeriesSpec:
 SERIES = (
     SeriesSpec(
         key="uniform4",
-        label="Uniform 4-bit",
+        label="Uniform4",
         backend="shared-bitplane",
         source_kind="shared",
         source_case="static4",
@@ -63,7 +63,7 @@ SERIES = (
     ),
     SeriesSpec(
         key="naive2p5",
-        label="Dynamic Avg 2.5-bit (independent)",
+        label="Dyn Avg2.5 (Independent)",
         backend="independent-precision",
         source_kind="naive",
         source_case="c2p5l20",
@@ -73,7 +73,7 @@ SERIES = (
     ),
     SeriesSpec(
         key="shared2p5",
-        label="Dynamic Avg 2.5-bit",
+        label="Dyn Avg2.5",
         backend="shared-bitplane",
         source_kind="shared",
         source_case="c2p5l20",
@@ -90,7 +90,7 @@ def configure_matplotlib() -> None:
             "font.family": "serif",
             "font.serif": ["Linux Libertine O", "Libertinus Serif", "STIXGeneral"],
             "font.size": 12,
-            "axes.labelsize": 12,
+            "axes.labelsize": 10,
             "axes.linewidth": 0.8,
             "xtick.labelsize": 11,
             "ytick.labelsize": 11,
@@ -100,14 +100,14 @@ def configure_matplotlib() -> None:
             "ytick.major.size": 3,
             "xtick.major.width": 0.7,
             "ytick.major.width": 0.7,
-            "legend.fontsize": 6.2,
+            "legend.fontsize": 7.5,
             "pdf.fonttype": 42,
             "ps.fonttype": 42,
             "figure.facecolor": PALETTE["white"],
             "axes.facecolor": PALETTE["white"],
             "savefig.dpi": 300,
-            "savefig.bbox": "tight",
-            "savefig.pad_inches": 0.02,
+            "savefig.bbox": None,
+            "savefig.pad_inches": 0.04,
         }
     )
 
@@ -401,7 +401,7 @@ def plot(
         expected_naive_run_id,
     )
 
-    fig, ax = plt.subplots(figsize=(3.35, 2.35))
+    fig, ax = plt.subplots(figsize=(3.35, 2.10))
     y_max = 0.0
     for spec in SERIES:
         x_values = [point[0] for point in values[spec.key]]
@@ -439,11 +439,11 @@ def plot(
     ax.set_xlabel("Cache capacity (GiB)")
     ax.set_ylabel("Decode throughput (tokens/s)")
     ax.legend(
-        loc="lower center",
-        bbox_to_anchor=(0.5, 1.01),
+        loc="upper left",
+        bbox_to_anchor=(0.01, 0.99),
         ncol=2,
         frameon=False,
-        handlelength=1.45,
+        handlelength=2.2,
         columnspacing=0.55,
         handletextpad=0.3,
         borderaxespad=0.0,
@@ -451,6 +451,7 @@ def plot(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     fig.tight_layout(pad=0.45)
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom - 0.02)
     for name in (
         "fig_cache_size_independent_precision_comparison_glm52",
         "fig_cache_size_prefix_reuse_ablation_glm52",
@@ -458,10 +459,9 @@ def plot(
         stem = output_dir / name
         fig.savefig(
             stem.with_suffix(".pdf"),
-            bbox_inches="tight",
             metadata={"CreationDate": None, "ModDate": None},
         )
-        fig.savefig(stem.with_suffix(".png"), dpi=300, bbox_inches="tight")
+        fig.savefig(stem.with_suffix(".png"), dpi=300)
     plt.close(fig)
     write_plot_data(
         plot_data_csv, values, source_hashes, shared_csv, naive_csv

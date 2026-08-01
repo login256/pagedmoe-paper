@@ -28,7 +28,7 @@ def configure_matplotlib() -> None:
             "font.family": "serif",
             "font.serif": ["Linux Libertine O", "Libertinus Serif", "STIXGeneral"],
             "font.size": 12,
-            "axes.labelsize": 12,
+            "axes.labelsize": 10,
             "axes.linewidth": 0.8,
             "xtick.labelsize": 11,
             "ytick.labelsize": 11,
@@ -38,14 +38,14 @@ def configure_matplotlib() -> None:
             "ytick.major.size": 3,
             "xtick.major.width": 0.7,
             "ytick.major.width": 0.7,
-            "legend.fontsize": 6.2,
+            "legend.fontsize": 7.5,
             "pdf.fonttype": 42,
             "ps.fonttype": 42,
             "figure.facecolor": PALETTE["white"],
             "axes.facecolor": PALETTE["white"],
             "savefig.dpi": 300,
-            "savefig.bbox": "tight",
-            "savefig.pad_inches": 0.02,
+            "savefig.bbox": None,
+            "savefig.pad_inches": 0.04,
         }
     )
 
@@ -90,7 +90,7 @@ def draw_series(
 def main() -> None:
     configure_matplotlib()
     caches, fused, expert = load_data()
-    fig, ax = plt.subplots(figsize=(3.35, 2.35))
+    fig, ax = plt.subplots(figsize=(3.35, 2.10))
 
     draw_series(
         ax,
@@ -99,7 +99,7 @@ def main() -> None:
         color=PALETTE["fused"],
         linestyle="-",
         marker="o",
-        label="PagedMoE fused",
+        label="Direct",
     )
     draw_series(
         ax,
@@ -108,7 +108,7 @@ def main() -> None:
         color=PALETTE["expert"],
         linestyle="--",
         marker="s",
-        label="Expert predequant",
+        label="Materialize",
     )
 
     ax.set_xlim(0, 50)
@@ -128,18 +128,19 @@ def main() -> None:
     ax.set_xlabel("Expert cache capacity (GiB)")
     ax.set_ylabel("Decode throughput (tokens/s)")
     ax.legend(
-        loc="lower center",
-        bbox_to_anchor=(0.5, 1.01),
+        loc="upper left",
+        bbox_to_anchor=(0.01, 0.99),
         ncol=2,
         frameon=False,
-        handlelength=1.45,
+        handlelength=2.2,
         columnspacing=0.55,
         handletextpad=0.3,
         borderaxespad=0.0,
     )
     fig.tight_layout(pad=0.45)
-    fig.savefig(OUTPUT_STEM.with_suffix(".pdf"), bbox_inches="tight")
-    fig.savefig(OUTPUT_STEM.with_suffix(".png"), dpi=300, bbox_inches="tight")
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom - 0.02)
+    fig.savefig(OUTPUT_STEM.with_suffix(".pdf"))
+    fig.savefig(OUTPUT_STEM.with_suffix(".png"), dpi=300)
     plt.close(fig)
 
 

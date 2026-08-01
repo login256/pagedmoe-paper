@@ -54,7 +54,7 @@ def configure_matplotlib() -> None:
             "font.family": "serif",
             "font.serif": ["Linux Libertine O", "Libertinus Serif", "STIXGeneral"],
             "font.size": 12,
-            "axes.labelsize": 12,
+            "axes.labelsize": 10,
             "axes.linewidth": 0.8,
             "xtick.labelsize": 11,
             "ytick.labelsize": 11,
@@ -66,7 +66,7 @@ def configure_matplotlib() -> None:
             "xtick.major.width": 0.7,
             "ytick.major.width": 0.7,
             "savefig.dpi": 300,
-            "savefig.bbox": "tight",
+            "savefig.bbox": None,
             "savefig.pad_inches": 0.02,
             "figure.facecolor": "#FFFFFF",
             "axes.facecolor": "#FFFFFF",
@@ -112,7 +112,7 @@ def plot(
     linear_y: bool,
 ) -> None:
     configure_matplotlib()
-    fig, ax = plt.subplots(figsize=(3.45, 2.35))
+    fig, ax = plt.subplots(figsize=(3.35, 1.95))
     method_order = ["direct"] + sorted(
         method for method in series if method.startswith("readout_from_")
     )
@@ -190,10 +190,11 @@ def plot(
         markerscale=0.9,
     )
 
-    fig.tight_layout(pad=0.35)
+    fig.tight_layout(pad=0.45)
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom - 0.02)
     output_stem.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_stem.with_suffix(".pdf"), bbox_inches="tight")
-    fig.savefig(output_stem.with_suffix(".png"), dpi=300, bbox_inches="tight")
+    fig.savefig(output_stem.with_suffix(".pdf"))
+    fig.savefig(output_stem.with_suffix(".png"), dpi=300)
     plt.close(fig)
 
 

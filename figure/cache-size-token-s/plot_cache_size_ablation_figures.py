@@ -141,43 +141,43 @@ MMAP_SOURCE = SourceSpec(
 
 CURVE_STYLE = {
     "ik_llama": {
-        "label": "ik_llama.cpp UD-IQ4_XS",
+        "label": "ik_llama IQ4",
         "color": PALETTE["black"],
         "linestyle": "-.",
         "marker": "^",
     },
     "uniform4": {
-        "label": "Uniform 4-bit",
+        "label": "Uniform4",
         "color": PALETTE["uniform4"],
         "linestyle": "-",
         "marker": "s",
     },
     "dynamic4": {
-        "label": "Dynamic Avg 4-bit",
+        "label": "Dyn Avg4",
         "color": PALETTE["dynamic4"],
         "linestyle": "-",
         "marker": "D",
     },
     "dynamic2p5": {
-        "label": "Dynamic Avg 2.5-bit",
+        "label": "Dyn Avg2.5",
         "color": PALETTE["dynamic2p5"],
         "linestyle": "-",
         "marker": "o",
     },
     "naive2p5": {
-        "label": "Dynamic Avg 2.5-bit (independent)",
+        "label": "Dyn Avg2.5 (Independent)",
         "color": PALETTE["dynamic2p5"],
         "linestyle": "--",
         "marker": "o",
     },
     "mmap_uniform4": {
-        "label": "Uniform 4-bit",
+        "label": "Uniform4",
         "color": PALETTE["uniform4"],
         "linestyle": ":",
         "marker": "s",
     },
     "mmap_dynamic2p5": {
-        "label": "Dynamic Avg 2.5-bit",
+        "label": "Dyn Avg2.5",
         "color": PALETTE["dynamic2p5"],
         "linestyle": ":",
         "marker": "o",
@@ -219,7 +219,7 @@ def configure_matplotlib() -> None:
             "font.family": "serif",
             "font.serif": ["Linux Libertine O", "Libertinus Serif", "STIXGeneral"],
             "font.size": 12,
-            "axes.labelsize": 12,
+            "axes.labelsize": 10,
             "axes.linewidth": 0.8,
             "xtick.labelsize": 11,
             "ytick.labelsize": 11,
@@ -229,14 +229,14 @@ def configure_matplotlib() -> None:
             "ytick.major.size": 3,
             "xtick.major.width": 0.7,
             "ytick.major.width": 0.7,
-            "legend.fontsize": 6.2,
+            "legend.fontsize": 7.5,
             "pdf.fonttype": 42,
             "ps.fonttype": 42,
             "figure.facecolor": PALETTE["white"],
             "axes.facecolor": PALETTE["white"],
             "savefig.dpi": 300,
-            "savefig.bbox": "tight",
-            "savefig.pad_inches": 0.02,
+            "savefig.bbox": None,
+            "savefig.pad_inches": 0.04,
         }
     )
 
@@ -739,8 +739,8 @@ def save_figure(fig: plt.Figure, output_dir: Path, output_names: tuple[str, ...]
     output_dir.mkdir(parents=True, exist_ok=True)
     for output_name in output_names:
         output_stem = output_dir / output_name
-        fig.savefig(output_stem.with_suffix(".pdf"), bbox_inches="tight")
-        fig.savefig(output_stem.with_suffix(".png"), dpi=300, bbox_inches="tight")
+        fig.savefig(output_stem.with_suffix(".pdf"))
+        fig.savefig(output_stem.with_suffix(".png"), dpi=300)
 
 
 def plot_single_panel(
@@ -749,7 +749,7 @@ def plot_single_panel(
     output_dir: Path,
     output_names: tuple[str, ...] | None = None,
 ) -> None:
-    fig, ax = plt.subplots(figsize=(3.35, 2.35))
+    fig, ax = plt.subplots(figsize=(3.35, 2.10))
     for key in FIGURE_SERIES[figure_name]:
         draw_series(ax, key, all_series[key])
 
@@ -771,16 +771,17 @@ def plot_single_panel(
         )
 
     ax.legend(
-        loc="lower center",
-        bbox_to_anchor=(0.5, 1.01),
+        loc="upper left",
+        bbox_to_anchor=(0.01, 0.99),
         ncol=2,
         frameon=False,
-        handlelength=1.45,
+        handlelength=2.2,
         columnspacing=0.55,
         handletextpad=0.3,
         borderaxespad=0.0,
     )
     fig.tight_layout(pad=0.45)
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom - 0.02)
     save_figure(fig, output_dir, output_names or OUTPUT_NAMES[figure_name])
     plt.close(fig)
 
@@ -791,33 +792,33 @@ def plot_mmap_backend(
     output_names: tuple[str, ...] | None = None,
 ) -> None:
     overhead = read_shared_memory_overhead()
-    fig, ax = plt.subplots(figsize=(3.35, 2.35))
+    fig, ax = plt.subplots(figsize=(3.35, 2.10))
 
     draw_series(
         ax,
         "uniform4",
         all_series["uniform4"],
-        label="Uniform 4-bit (shared)",
+        label="Uniform4",
         x_offset_gib=overhead.value_gib,
     )
     draw_series(
         ax,
         "mmap_uniform4",
         all_series["mmap_uniform4"],
-        label="Uniform 4-bit (mmap)",
+        label="Uniform4 (mmap)",
     )
     draw_series(
         ax,
         "dynamic2p5",
         all_series["dynamic2p5"],
-        label="Dynamic Avg 2.5-bit (shared)",
+        label="Dyn Avg2.5",
         x_offset_gib=overhead.value_gib,
     )
     draw_series(
         ax,
         "mmap_dynamic2p5",
         all_series["mmap_dynamic2p5"],
-        label="Dynamic Avg 2.5-bit (mmap)",
+        label="Dyn Avg2.5 (mmap)",
     )
     configure_axes(
         ax,
@@ -831,13 +832,15 @@ def plot_mmap_backend(
         bbox_to_anchor=(0.5, 1.01),
         ncol=2,
         frameon=False,
-        handlelength=1.45,
+        handlelength=2.2,
         columnspacing=0.55,
         handletextpad=0.3,
+        labelspacing=0.2,
         borderaxespad=0.0,
-        fontsize=5.8,
+        fontsize=7.5,
     )
     fig.tight_layout(pad=0.45)
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom - 0.02)
     save_figure(fig, output_dir, output_names or OUTPUT_NAMES["mmap-backend"])
     plt.close(fig)
 
@@ -856,9 +859,9 @@ def plot_figure(
 
 def display_label(figure_name: str, key: str) -> str:
     if figure_name == "mmap-backend":
-        backend = "mmap backend" if key.startswith("mmap_") else "shared-bitplane"
         policy_key = key.removeprefix("mmap_")
-        return f"{CURVE_STYLE[policy_key]['label']} ({backend})"
+        label = CURVE_STYLE[policy_key]["label"]
+        return f"{label} (mmap)" if key.startswith("mmap_") else label
     return str(CURVE_STYLE[key]["label"])
 
 

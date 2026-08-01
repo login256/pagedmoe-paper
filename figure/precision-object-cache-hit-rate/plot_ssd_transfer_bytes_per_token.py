@@ -29,35 +29,35 @@ PALETTE = {
 
 SERIES_SPECS = [
     {
-        "label": "Uniform 4-bit",
+        "label": "Uniform4",
         "avg_bits": 4.0,
         "color": PALETTE["uniform4"],
         "linestyle": "-",
         "marker": "s",
     },
     {
-        "label": "Dynamic Avg 4-bit",
+        "label": "Dyn Avg4",
         "avg_bits": 4.0,
         "color": PALETTE["dynamic4"],
         "linestyle": "-",
         "marker": "D",
     },
     {
-        "label": "Dynamic Avg 4-bit w/o Prefix Reuse",
+        "label": "Dyn Avg4 (Independent)",
         "avg_bits": 4.0,
         "color": PALETTE["dynamic4"],
         "linestyle": "--",
         "marker": "D",
     },
     {
-        "label": "Dynamic Avg 2.5-bit",
+        "label": "Dyn Avg2.5",
         "avg_bits": 2.5,
         "color": PALETTE["dynamic2p5"],
         "linestyle": "-",
         "marker": "o",
     },
     {
-        "label": "Dynamic Avg 2.5-bit w/o Prefix Reuse",
+        "label": "Dyn Avg2.5 (Independent)",
         "avg_bits": 2.5,
         "color": PALETTE["dynamic2p5"],
         "linestyle": "--",
@@ -72,7 +72,7 @@ def configure_matplotlib() -> None:
             "font.family": "serif",
             "font.serif": ["Linux Libertine O", "Libertinus Serif", "STIXGeneral"],
             "font.size": 12,
-            "axes.labelsize": 12,
+            "axes.labelsize": 10,
             "axes.linewidth": 0.8,
             "xtick.labelsize": 11,
             "ytick.labelsize": 11,
@@ -82,14 +82,14 @@ def configure_matplotlib() -> None:
             "ytick.major.size": 3,
             "xtick.major.width": 0.7,
             "ytick.major.width": 0.7,
-            "legend.fontsize": 6.1,
+            "legend.fontsize": 7.5,
             "pdf.fonttype": 42,
             "ps.fonttype": 42,
             "figure.facecolor": PALETTE["white"],
             "axes.facecolor": PALETTE["white"],
             "savefig.dpi": 300,
-            "savefig.bbox": "tight",
-            "savefig.pad_inches": 0.02,
+            "savefig.bbox": None,
+            "savefig.pad_inches": 0.04,
         }
     )
 
@@ -179,7 +179,7 @@ def plot(
     transfer_series: dict[str, list[tuple[int, float, float]]],
 ) -> None:
     configure_matplotlib()
-    fig, ax = plt.subplots(figsize=(3.35, 2.35))
+    fig, ax = plt.subplots(figsize=(3.35, 2.10))
 
     for spec in SERIES_SPECS:
         values = transfer_series[spec["label"]]
@@ -218,16 +218,18 @@ def plot(
         bbox_to_anchor=(0.5, 1.01),
         ncol=2,
         frameon=False,
-        handlelength=1.45,
-        columnspacing=0.55,
+        handlelength=2.2,
+        columnspacing=0.7,
         handletextpad=0.3,
+        labelspacing=0.15,
         borderaxespad=0.0,
     )
 
     output_stem.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout(pad=0.45)
-    fig.savefig(output_stem.with_suffix(".pdf"), bbox_inches="tight")
-    fig.savefig(output_stem.with_suffix(".png"), dpi=300, bbox_inches="tight")
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom - 0.02)
+    fig.savefig(output_stem.with_suffix(".pdf"))
+    fig.savefig(output_stem.with_suffix(".png"), dpi=300)
     plt.close(fig)
 
 

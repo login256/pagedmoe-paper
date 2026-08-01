@@ -1,7 +1,7 @@
-# Expert-predequant vs Fused
+# Direct vs Materialize
 
-该目录比较 Qwen3.5-397B 在 shared PagedMoE backend 下的 fused 与完整 expert
-先解量化路径。
+该目录比较 Qwen3.5-397B 在 shared PagedMoE backend 下的 Direct（fused）与
+Materialize（完整 expert 先解量化）路径。
 
 共同配置：
 
@@ -15,14 +15,14 @@ codebook / bitplane workers: 1 / 8
 CUDA graph: enabled
 ```
 
-Fused 数据复用论文 Figure 的本机实测快照：
+Direct 数据复用论文 Figure 的本机实测快照：
 
 ```text
 paper/figure/cache-size-token-s/data/shared_c2p5l25_20260714_114526.csv
 SHA256: 6f34fbe2d3830e7c1d6720fedd7cf63e90ce26cf1faa653b21227f4ade02e646
 ```
 
-Expert-predequant 数据来自：
+Materialize 数据来自：
 
 ```text
 src/target/bench/expert_predequant_c2p5l25_decode500_matrix_20260720/summary.csv
@@ -46,5 +46,5 @@ fig_expert_predequant_vs_fused.png
 fig_expert_predequant_vs_fused.pdf
 ```
 
-注意：每个点只有一次冷进程运行。Expert-predequant 曲线存在 allocator、内存带宽和
+注意：每个点只有一次冷进程运行。Materialize 曲线存在 allocator、内存带宽和
 高 cache 容量压力造成的非单调波动；图中保留原始结果，没有平滑。
