@@ -26,11 +26,20 @@ HIT_RATE_COLOR = "#68616F"
 
 def plot(input_csv: Path, output_stem: Path) -> None:
     configure_matplotlib()
+    plt.rcParams.update(
+        {
+            "font.size": 13,
+            "axes.labelsize": 13,
+            "xtick.labelsize": 12,
+            "ytick.labelsize": 12,
+            "legend.fontsize": 9.5,
+        }
+    )
     rows_by_cache = {row.cache_size_gib: row for row in read_data(input_csv)}
     rows = [rows_by_cache[cache_size] for cache_size in COMPACT_CACHE_GIB]
     x_values = [row.cache_size_gib for row in rows]
 
-    fig, ax = plt.subplots(figsize=(6.0, 3.45))
+    fig, ax = plt.subplots(figsize=(7.0, 2.45))
     bottoms = [0.0] * len(rows)
     for field, label, color, hatch in COMPONENTS:
         values = [getattr(row, field) for row in rows]
@@ -53,9 +62,9 @@ def plot(input_csv: Path, output_stem: Path) -> None:
         [row.window_hit_rate for row in rows],
         color=HIT_RATE_COLOR,
         linestyle="-",
-        linewidth=1.3,
+        linewidth=1.5,
         marker="o",
-        markersize=4.0,
+        markersize=4.5,
         markerfacecolor=PALETTE["white"],
         markeredgecolor=HIT_RATE_COLOR,
         markeredgewidth=0.85,
@@ -85,31 +94,38 @@ def plot(input_csv: Path, output_stem: Path) -> None:
     ax_hit.spines["top"].set_visible(False)
     ax.set_xlabel("Expert cache capacity (GiB)")
     ax.set_ylabel("Decode latency (ms/token)")
-    ax_hit.set_ylabel("Expert cache hit rate", color=HIT_RATE_COLOR)
     ax_hit.tick_params(axis="y", colors=HIT_RATE_COLOR)
     ax_hit.spines["right"].set_color(HIT_RATE_COLOR)
 
-    bar_handles, bar_labels = ax.get_legend_handles_labels()
-    hit_handles, hit_labels = ax_hit.get_legend_handles_labels()
-    ax.legend(
+    bar_handles, _ = ax.get_legend_handles_labels()
+    hit_handles, _ = ax_hit.get_legend_handles_labels()
+    legend_labels = [
+        "Exposed\nSSD I/O",
+        "I/O--compute\noverlap",
+        "Non-overlapped\ncompute",
+        "Other model\nand runtime",
+        "Cache hit rate",
+    ]
+    fig.legend(
         bar_handles + hit_handles,
-        bar_labels + hit_labels,
-        loc="lower center",
-        bbox_to_anchor=(0.5, 1.02),
-        ncol=3,
+        legend_labels,
+        loc="center left",
+        bbox_to_anchor=(0.84, 0.57),
+        ncol=1,
         frameon=False,
-        handlelength=1.45,
-        columnspacing=0.75,
+        handlelength=1.1,
         handletextpad=0.4,
         borderaxespad=0.0,
+        labelspacing=0.65,
     )
 
     output_stem.parent.mkdir(parents=True, exist_ok=True)
-    fig.tight_layout(pad=0.45)
-    fig.savefig(output_stem.with_suffix(".pdf"), bbox_inches="tight")
-    fig.savefig(output_stem.with_suffix(".png"), dpi=300, bbox_inches="tight")
-    svg_path = output_stem.with_suffix(".svg")
-    fig.savefig(svg_path, bbox_inches="tight")
+    fig.subplots_adjust(left=0.24, right=0.76, bottom=0.23, top=0.96)
+    with plt.rc_context({"savefig.bbox": None, "savefig.pad_inches": 0}):
+        fig.savefig(output_stem.with_suffix(".pdf"), bbox_inches=None)
+        fig.savefig(output_stem.with_suffix(".png"), dpi=300, bbox_inches=None)
+        svg_path = output_stem.with_suffix(".svg")
+        fig.savefig(svg_path, bbox_inches=None)
     normalize_svg(svg_path)
     plt.close(fig)
 
