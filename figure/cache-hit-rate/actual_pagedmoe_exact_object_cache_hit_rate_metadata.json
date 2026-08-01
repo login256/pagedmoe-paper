@@ -1,21 +1,42 @@
 {
   "script": "/home/lyt/paged-moe/paper/figure/cache-hit-rate/simulate_actual_pagedmoe_exact_object_cache_hit_rate.py",
-  "script_sha256": "652a98bf61a5bc805d9fddb5f076004518f2966792fd66ea2c95db225e8e6db9",
+  "script_sha256": "60b27d16504548d182abb92c98971bd919aadee8377c7a459936ad6cf36c6dfc",
   "comparison_design": {
-    "type": "pairwise matched within each live-run route",
+    "type": "hybrid actual-runtime reference and offline replay",
     "pairs": {
-      "c4l40": [
-        "Fixed4",
-        "DynAvg4"
-      ],
       "c3l30": [
         "Fixed3",
         "DynAvg3"
       ]
     },
-    "warning": "The c4l40 and c3l30 generations may have different routes; do not interpret all four methods as replaying one shared trace."
+    "standalone": {
+      "Fixed4": "actual Fixed4 whole-expert runtime sweep",
+      "DynAvg4": "offline exact-object replay of the c4l40 live run"
+    },
+    "route_relationships": {
+      "Fixed4": "independent measured Fixed4 generation with no exported route hash; not route-matched to DynAvg4",
+      "DynAvg4": "cold replay of the c4l40 route; not route-matched to measured Fixed4",
+      "Fixed3": "route-matched to DynAvg3 on the selected c3l30 trace",
+      "DynAvg3": "route-matched to Fixed3 on the selected c3l30 trace"
+    },
+    "warning": "Fixed4 uses a prefill-warm runtime cache and its own generated routes. The other methods are cold offline replays. Only Fixed3 and DynAvg3 are route-matched; do not interpret all four methods as a controlled same-route comparison."
   },
-  "cache_policy": "global atomic byte-capacity LRU",
+  "result_kinds": {
+    "Fixed4": "measured_runtime_exact_whole_expert_counters",
+    "Fixed3": "simulated_cold_exact_object_lru",
+    "DynAvg4": "simulated_cold_exact_object_lru",
+    "DynAvg3": "simulated_cold_exact_object_lru"
+  },
+  "cache_policy": {
+    "Fixed4": {
+      "description": "actual PagedMoE global whole-expert LRU; one atomic Fixed4 object contains four bitplanes and one codebook; current invocation protected; reverse touch",
+      "provenance": "measured counters in per-capacity fixed4_whole_expert_timing.csv files produced from PagedMoE binary worker traces"
+    },
+    "offline_replays": {
+      "description": "offline global atomic byte-capacity LRU over exact objects in trace order",
+      "provenance": "simulate_lru() in this script"
+    }
+  },
   "exact_object_key": [
     "layer",
     "expert_id",
@@ -26,7 +47,18 @@
     "codebook": 98304,
     "per_bitplane": 1572864
   },
-  "decode_selection": "first output token uses the last prefill record for each layer; the remaining tokens use the final complete 0..layers-1 cycles",
+  "measurement_window": {
+    "Fixed4": "runtime decode cycles 0..499 (500 tokens); the prefill-produced first output token is excluded and runtime cycle 500 supplies only the right boundary",
+    "offline_replays": "500 output-token routes: the last prefill access per layer followed by the final 499 complete runtime decode cycles"
+  },
+  "decode_selection": {
+    "Fixed4": "runtime decode cycles 0..499 (500 tokens); the prefill-produced first output token is excluded and runtime cycle 500 supplies only the right boundary",
+    "offline_replays": "500 output-token routes: the last prefill access per layer followed by the final 499 complete runtime decode cycles"
+  },
+  "cache_initial_state": {
+    "Fixed4": "prefill-warm runtime cache; counters reset before the first measured decode cycle while cache contents are retained",
+    "offline_replays": "cold empty cache at the first selected access; earlier prefill history is not replayed"
+  },
   "cache_gib": [
     8,
     12,
@@ -38,33 +70,33 @@
     36,
     40,
     44,
-    48,
-    52,
-    56,
-    60,
-    64
+    48
   ],
   "primary_cache_gib": 24,
   "primary_results": {
     "Fixed4": {
-      "request_hit_rate": 0.56140333,
-      "byte_hit_rate": 0.56140333,
-      "hits": 168421,
+      "result_kind": "measured_runtime_exact_whole_expert_counters",
+      "request_hit_rate": 0.57075667,
+      "byte_hit_rate": 0.57075667,
+      "hits": 171227,
       "requests": 300000
     },
     "Fixed3": {
+      "result_kind": "simulated_cold_exact_object_lru",
       "request_hit_rate": 0.64293667,
       "byte_hit_rate": 0.64293667,
       "hits": 192881,
       "requests": 300000
     },
     "DynAvg4": {
+      "result_kind": "simulated_cold_exact_object_lru",
       "request_hit_rate": 0.35148,
       "byte_hit_rate": 0.36037518,
       "hits": 105444,
       "requests": 300000
     },
     "DynAvg3": {
+      "result_kind": "simulated_cold_exact_object_lru",
       "request_hit_rate": 0.39711,
       "byte_hit_rate": 0.41428333,
       "hits": 119133,
@@ -115,21 +147,202 @@
         30
       ],
       "route_sha256": "fabbba98785419223fe241fde6ef3b741791ddc3d2ed5bb029508dcdf2c2149e"
+    },
+    "fixed4_runtime": {
+      "result_kind": "measured_runtime_exact_whole_expert_counters",
+      "run_root": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957",
+      "source": "measured counters in per-capacity fixed4_whole_expert_timing.csv files produced from PagedMoE binary worker traces",
+      "cache_initial_state": "prefill-warm runtime cache; counters reset before the first measured decode cycle while cache contents are retained",
+      "measurement_window": "runtime decode cycles 0..499 (500 tokens); the prefill-produced first output token is excluded and runtime cycle 500 supplies only the right boundary",
+      "cache_policy": "actual PagedMoE global whole-expert LRU; one atomic Fixed4 object contains four bitplanes and one codebook; current invocation protected; reverse touch",
+      "cache_policy_provenance": "measured counters in per-capacity fixed4_whole_expert_timing.csv files produced from PagedMoE binary worker traces",
+      "route_relationship": "independent measured Fixed4 generation with no exported route hash; not route-matched to DynAvg4",
+      "analyzer": "script/analyze_fixed4_whole_expert_timing.py at root commit 644487a",
+      "earlier_figure_source": {
+        "path": "/home/lyt/paged-moe/paper/figure/breakdown-cache-size-ms-token/qwen35_fixed4_cache_size_absolute_time_breakdown.csv",
+        "sha256": "4941acb17406ed9c1e86ee27920e416f7cb725a8948ca33d680fd87231b0515c",
+        "validated_cache_gib": [
+          8,
+          12,
+          16,
+          20,
+          24,
+          28,
+          32,
+          36,
+          40,
+          44,
+          48
+        ],
+        "relationship": "Fixed4 values come from the same measured runtime sweep and match the earlier figure's window_hit_rate values"
+      },
+      "cases": {
+        "8": {
+          "timing_csv": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case001_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache8_shard1/fixed4_whole_expert_timing.csv",
+          "timing_csv_size_bytes": 894,
+          "timing_csv_sha256": "2efbddefa263703d3a6ad7f9c58c18c5719fa1c6a17f36aa852907caae171a02",
+          "binary_trace_dir": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case001_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache8_shard1",
+          "binary_worker_trace_count": 26,
+          "requests": 300000,
+          "hits": 103156,
+          "misses": 196844,
+          "request_hit_rate": 0.34385333333333334
+        },
+        "12": {
+          "timing_csv": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case002_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache12_shard1/fixed4_whole_expert_timing.csv",
+          "timing_csv_size_bytes": 878,
+          "timing_csv_sha256": "e871b4d490ffb6a0d3906a3025304540a5ae700728175e6e682fee4089be0c21",
+          "binary_trace_dir": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case002_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache12_shard1",
+          "binary_worker_trace_count": 26,
+          "requests": 300000,
+          "hits": 128481,
+          "misses": 171519,
+          "request_hit_rate": 0.42827
+        },
+        "16": {
+          "timing_csv": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case003_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache16_shard1/fixed4_whole_expert_timing.csv",
+          "timing_csv_size_bytes": 889,
+          "timing_csv_sha256": "acc62a628af45f8b655fa11f845c634bf7c3d7fc6b2b7695bbcec113878d6798",
+          "binary_trace_dir": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case003_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache16_shard1",
+          "binary_worker_trace_count": 26,
+          "requests": 300000,
+          "hits": 144200,
+          "misses": 155800,
+          "request_hit_rate": 0.4806666666666667
+        },
+        "20": {
+          "timing_csv": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case004_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache20_shard1/fixed4_whole_expert_timing.csv",
+          "timing_csv_size_bytes": 876,
+          "timing_csv_sha256": "daadcf8cac3eb59ec54a44066aea43bda6437a9b5555cae5ad308bebdc70ee6a",
+          "binary_trace_dir": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case004_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache20_shard1",
+          "binary_worker_trace_count": 26,
+          "requests": 300000,
+          "hits": 157224,
+          "misses": 142776,
+          "request_hit_rate": 0.52408
+        },
+        "24": {
+          "timing_csv": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case005_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache24_shard1/fixed4_whole_expert_timing.csv",
+          "timing_csv_size_bytes": 891,
+          "timing_csv_sha256": "2eeb30ace586524ccdf64b74749c838374ee83cbbffcda5b2ee0f5a85b4ecd5c",
+          "binary_trace_dir": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case005_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache24_shard1",
+          "binary_worker_trace_count": 26,
+          "requests": 300000,
+          "hits": 171227,
+          "misses": 128773,
+          "request_hit_rate": 0.5707566666666667
+        },
+        "28": {
+          "timing_csv": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case006_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache28_shard1/fixed4_whole_expert_timing.csv",
+          "timing_csv_size_bytes": 886,
+          "timing_csv_sha256": "d3f67a30948485ab2503b8b6d27b7e60887e64d40d5d846bd6acf558e45abb2b",
+          "binary_trace_dir": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case006_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache28_shard1",
+          "binary_worker_trace_count": 26,
+          "requests": 300000,
+          "hits": 183560,
+          "misses": 116440,
+          "request_hit_rate": 0.6118666666666667
+        },
+        "32": {
+          "timing_csv": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case007_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache32_shard1/fixed4_whole_expert_timing.csv",
+          "timing_csv_size_bytes": 889,
+          "timing_csv_sha256": "e79325319f87d19991a9987eb214d43f4b206e3d173a383bc108812a867e6c06",
+          "binary_trace_dir": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case007_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache32_shard1",
+          "binary_worker_trace_count": 26,
+          "requests": 300000,
+          "hits": 191756,
+          "misses": 108244,
+          "request_hit_rate": 0.6391866666666667
+        },
+        "36": {
+          "timing_csv": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case008_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache36_shard1/fixed4_whole_expert_timing.csv",
+          "timing_csv_size_bytes": 881,
+          "timing_csv_sha256": "6a2e47b518d197ff6b84bca653f04dc97d8419fd2ded61aed8052ff9056bb068",
+          "binary_trace_dir": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case008_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache36_shard1",
+          "binary_worker_trace_count": 26,
+          "requests": 300000,
+          "hits": 201153,
+          "misses": 98847,
+          "request_hit_rate": 0.67051
+        },
+        "40": {
+          "timing_csv": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case009_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache40_shard1/fixed4_whole_expert_timing.csv",
+          "timing_csv_size_bytes": 875,
+          "timing_csv_sha256": "891f03b96df8b5674f4b5f5da2605197d88e32ce3f872c38bdaf810d80c1dadd",
+          "binary_trace_dir": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case009_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache40_shard1",
+          "binary_worker_trace_count": 26,
+          "requests": 300000,
+          "hits": 208707,
+          "misses": 91293,
+          "request_hit_rate": 0.69569
+        },
+        "44": {
+          "timing_csv": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case010_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache44_shard1/fixed4_whole_expert_timing.csv",
+          "timing_csv_size_bytes": 877,
+          "timing_csv_sha256": "04e5f7d7d235a66882e01b136d3f1e61a2e21da8c289f501b78f99cdc89e1771",
+          "binary_trace_dir": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case010_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache44_shard1",
+          "binary_worker_trace_count": 26,
+          "requests": 300000,
+          "hits": 216789,
+          "misses": 83211,
+          "request_hit_rate": 0.72263
+        },
+        "48": {
+          "timing_csv": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case011_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache48_shard1/fixed4_whole_expert_timing.csv",
+          "timing_csv_size_bytes": 879,
+          "timing_csv_sha256": "7d0e9330888389239823e78e1a5a3a1ea935461ab1e4a10b220c9518ee3d3616",
+          "binary_trace_dir": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957/traces/kt_pagedmoe_qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957_case011_p0_avg4p0000_4-4-4-4-4-4-4-4-4-4_cache48_shard1",
+          "binary_worker_trace_count": 26,
+          "requests": 300000,
+          "hits": 223959,
+          "misses": 76041,
+          "request_hit_rate": 0.74653
+        }
+      }
     }
   },
   "methods": {
     "Fixed4": {
-      "trace_case": "c4l40",
-      "requests": 300000,
+      "result_kind": "measured_runtime_exact_whole_expert_counters",
+      "source_type": "actual Fixed4 whole-expert runtime counters",
+      "result_provenance": "independent per-capacity live PagedMoE runtime measurements",
+      "policy_provenance": "measured counters in per-capacity fixed4_whole_expert_timing.csv files produced from PagedMoE binary worker traces",
+      "route_relationship": "independent measured Fixed4 generation with no exported route hash; not route-matched to DynAvg4",
+      "trace_case": "fixed4-runtime",
+      "requests_per_capacity": 300000,
       "mean_precision_bits": 4.0,
       "precision_histogram": {
         "4": 300000
       },
-      "unique_exact_objects": 23013,
-      "unique_layer_experts": 23013
+      "unique_exact_objects": null,
+      "unique_layer_experts": null,
+      "measurement_window": "runtime decode cycles 0..499 (500 tokens); the prefill-produced first output token is excluded and runtime cycle 500 supplies only the right boundary",
+      "cache_initial_state": "prefill-warm runtime cache; counters reset before the first measured decode cycle while cache contents are retained",
+      "cache_policy": "actual PagedMoE global whole-expert LRU; one atomic Fixed4 object contains four bitplanes and one codebook; current invocation protected; reverse touch",
+      "capacities": [
+        8,
+        12,
+        16,
+        20,
+        24,
+        28,
+        32,
+        36,
+        40,
+        44,
+        48
+      ]
     },
     "Fixed3": {
+      "result_kind": "simulated_cold_exact_object_lru",
+      "source_type": "offline exact-object replay",
+      "result_provenance": "deterministic offline replay by this script",
+      "policy_provenance": "simulate_lru() in this script",
+      "route_relationship": "route-matched to DynAvg3 on the selected c3l30 trace",
       "trace_case": "c3l30",
+      "measurement_window": "500 output-token routes: the last prefill access per layer followed by the final 499 complete runtime decode cycles",
+      "cache_initial_state": "cold empty cache at the first selected access; earlier prefill history is not replayed",
+      "cache_policy": "offline global atomic byte-capacity LRU over exact objects in trace order",
       "requests": 300000,
       "mean_precision_bits": 3.0,
       "precision_histogram": {
@@ -139,7 +352,15 @@
       "unique_layer_experts": 23046
     },
     "DynAvg4": {
+      "result_kind": "simulated_cold_exact_object_lru",
+      "source_type": "offline exact-object replay",
+      "result_provenance": "deterministic offline replay by this script",
+      "policy_provenance": "simulate_lru() in this script",
+      "route_relationship": "cold replay of the c4l40 route; not route-matched to measured Fixed4",
       "trace_case": "c4l40",
+      "measurement_window": "500 output-token routes: the last prefill access per layer followed by the final 499 complete runtime decode cycles",
+      "cache_initial_state": "cold empty cache at the first selected access; earlier prefill history is not replayed",
+      "cache_policy": "offline global atomic byte-capacity LRU over exact objects in trace order",
       "requests": 300000,
       "mean_precision_bits": 4.0,
       "precision_histogram": {
@@ -156,7 +377,15 @@
       "unique_layer_experts": 23013
     },
     "DynAvg3": {
+      "result_kind": "simulated_cold_exact_object_lru",
+      "source_type": "offline exact-object replay",
+      "result_provenance": "deterministic offline replay by this script",
+      "policy_provenance": "simulate_lru() in this script",
+      "route_relationship": "route-matched to Fixed3 on the selected c3l30 trace",
       "trace_case": "c3l30",
+      "measurement_window": "500 output-token routes: the last prefill access per layer followed by the final 499 complete runtime decode cycles",
+      "cache_initial_state": "cold empty cache at the first selected access; earlier prefill history is not replayed",
+      "cache_policy": "offline global atomic byte-capacity LRU over exact objects in trace order",
       "requests": 300000,
       "mean_precision_bits": 3.0,
       "precision_histogram": {

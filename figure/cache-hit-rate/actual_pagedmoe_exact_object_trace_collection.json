@@ -1,6 +1,6 @@
 {
   "collected_at_utc": "2026-07-31",
-  "purpose": "Capture real PagedMoE marginal-gain targets for exact-object cache replay.",
+  "purpose": "Combine a real Fixed4 whole-expert runtime reference with marginal-gain traces for exact-object cache replay.",
   "source_revisions": {
     "repository": "d728c187a26f498148a64c35ebeb4a49790c181e",
     "src_submodule": "8d76da5d8b93db194c7338f3162c708630f40502",
@@ -66,8 +66,43 @@
       "runtime_read_job_cache_hit_rate": 0.6590
     }
   },
+  "fixed4_reference": {
+    "run_root": "/home/lyt/paged-moe/src/target/bench/qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957",
+    "root_commit_with_analyzer": "644487a",
+    "src_commit_with_runtime_cache": "40f5f2b",
+    "source": "traces/*/fixed4_whole_expert_timing.csv, validated against binary worker traces",
+    "earlier_figure_source_csv": "figure/breakdown-cache-size-ms-token/qwen35_fixed4_cache_size_absolute_time_breakdown.csv",
+    "relationship": "The Fixed4 curve uses the same measured runtime sweep as the earlier cache-capacity figure.",
+    "cache_gib": [
+      8,
+      12,
+      16,
+      20,
+      24,
+      28,
+      32,
+      36,
+      40,
+      44,
+      48
+    ],
+    "window": "500 runtime decode cycles, tokens 0 through 499",
+    "cache_initial_state": "prefill-warm",
+    "cache_policy": "Fixed4 whole-expert runtime LRU with same-invocation protection and reverse touch",
+    "request_count_per_capacity": 300000,
+    "object_key_equivalent": [
+      "layer",
+      "expert_id",
+      4
+    ]
+  },
   "replay": {
     "script": "simulate_actual_pagedmoe_exact_object_cache_hit_rate.py",
+    "methods": [
+      "Fixed3",
+      "DynAvg4",
+      "DynAvg3"
+    ],
     "selection": "500 logical output tokens: last prefill route per layer plus 499 complete decode cycles",
     "selected_layer_records_per_case": 30000,
     "selected_object_requests_per_case": 300000,
@@ -83,6 +118,7 @@
   "caveats": [
     "The runtime read_job_cache_hit_rate is a shared-bitplane I/O metric, not the simulated exact-object request hit rate.",
     "Recorded target precisions include feedback from the live shared-bitplane cache and its health-check warmups.",
-    "The c4l40 and c3l30 live generations have different routes; only Fixed4 versus DynAvg4 and Fixed3 versus DynAvg3 are route-matched."
+    "Fixed4 uses its own generated routes, runtime cache semantics, runtime-decode window, and prefill-warm state; it is an actual-runtime reference rather than a route-matched baseline for DynAvg4.",
+    "The c4l40 and c3l30 live generations have different routes; only Fixed3 versus DynAvg3 are route-matched in the plotted data."
   ]
 }

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Replay real PagedMoE precision traces through an exact-object LRU cache.
+"""Build exact-object cache hit-rate curves from real PagedMoE traces.
 
-The dynamic series use the target precision emitted by PagedMoE's
-``marginal_gain`` allocator. The fixed series reuse the expert routes from the
-corresponding dynamic run, but replace every target with a uniform precision.
-The comparison is pairwise matched: Fixed4/DynAvg4 use the c4l40 routes and
-Fixed3/DynAvg3 use the c3l30 routes. It does not assume that the two live runs
-produce the same routes.
+Fixed4 uses the validated whole-expert hit/miss counters from the real Fixed4
+runtime sweep. The other series replay marginal-gain precision traces through
+an offline exact-object LRU. Fixed3/DynAvg3 are route-matched on the c3l30 run;
+DynAvg4 retains the targets and routes from the c4l40 run. The resulting figure
+therefore combines an actual-runtime Fixed4 reference with offline replays and
+does not claim that all four methods share one route or cache initial state.
 
 An exact object is keyed by ``(layer, expert_id, precision)`` and is inserted
 atomically. Objects at different precisions do not share bytes or cache hits.
@@ -30,10 +30,23 @@ from matplotlib.ticker import FuncFormatter
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parents[2]
 DEFAULT_OUTPUT_STEM = "fig_actual_pagedmoe_exact_object_cache_hit_rate"
 DEFAULT_CSV_NAME = "actual_pagedmoe_exact_object_cache_hit_rate.csv"
 DEFAULT_PRIMARY_CSV_NAME = "actual_pagedmoe_exact_object_cache_hit_rate_24gib.csv"
 DEFAULT_METADATA_NAME = "actual_pagedmoe_exact_object_cache_hit_rate_metadata.json"
+FIXED4_RUNTIME_RUN_NAME = (
+    "qwen35_fixed4_whole_expert_activity_runtime500_20260721_171957"
+)
+DEFAULT_FIXED4_RUNTIME_ROOT = (
+    REPO_ROOT / "src" / "target" / "bench" / FIXED4_RUNTIME_RUN_NAME
+)
+DEFAULT_FIXED4_FIGURE_SOURCE_CSV = (
+    SCRIPT_DIR.parent
+    / "breakdown-cache-size-ms-token"
+    / "qwen35_fixed4_cache_size_absolute_time_breakdown.csv"
+)
+FIXED4_TIMING_CSV_NAME = "fixed4_whole_expert_timing.csv"
 
 TRACE_TAG = "[pagedmoe-precision-trace]"
 MARGINAL_MARKER_RE = re.compile(r"\[pagedmoe-precision-trace\]\s+mode=marginal_gain\b")
@@ -46,6 +59,7 @@ TRACE_RE = re.compile(
     r"compute_bit_budget=(?P<compute_budget>Some\(\d+\)|None)\s+"
     r"max_load_bits=(?P<max_load_bits>Some\(\d+\)|None)"
 )
+FIXED4_CACHE_DIR_RE = re.compile(r"_cache(?P<cache_gib>\d+)_shard\d+$")
 
 LAYERS = 60
 TOP_K = 10
@@ -53,6 +67,53 @@ DECODE_TOKENS = 500
 MIN_PRECISION = 1
 MAX_PRECISION = 8
 GIB = 1024**3
+
+FIXED4_EXPECTED_SAMPLE_TOKENS = 500
+FIXED4_EXPECTED_MODEL_LAYERS = 60
+FIXED4_EXPECTED_TOP_K = 10
+FIXED4_EXPECTED_SAMPLE_LAYERS = (
+    FIXED4_EXPECTED_SAMPLE_TOKENS * FIXED4_EXPECTED_MODEL_LAYERS
+)
+FIXED4_EXPECTED_SAMPLE_ACCESSES = FIXED4_EXPECTED_SAMPLE_LAYERS * FIXED4_EXPECTED_TOP_K
+
+MEASURED_FIXED4_RESULT_KIND = "measured_runtime_exact_whole_expert_counters"
+REPLAY_RESULT_KIND = "simulated_cold_exact_object_lru"
+FIXED4_INITIAL_CACHE_STATE = (
+    "prefill-warm runtime cache; counters reset before the first measured "
+    "decode cycle while cache contents are retained"
+)
+REPLAY_INITIAL_CACHE_STATE = (
+    "cold empty cache at the first selected access; earlier prefill history "
+    "is not replayed"
+)
+FIXED4_MEASUREMENT_WINDOW = (
+    "runtime decode cycles 0..499 (500 tokens); the prefill-produced first "
+    "output token is excluded and runtime cycle 500 supplies only the right boundary"
+)
+REPLAY_MEASUREMENT_WINDOW = (
+    "500 output-token routes: the last prefill access per layer followed by "
+    "the final 499 complete runtime decode cycles"
+)
+FIXED4_CACHE_POLICY = (
+    "actual PagedMoE global whole-expert LRU; one atomic Fixed4 object contains "
+    "four bitplanes and one codebook; current invocation protected; reverse touch"
+)
+REPLAY_CACHE_POLICY = (
+    "offline global atomic byte-capacity LRU over exact objects in trace order"
+)
+FIXED4_POLICY_PROVENANCE = (
+    "measured counters in per-capacity fixed4_whole_expert_timing.csv files "
+    "produced from PagedMoE binary worker traces"
+)
+REPLAY_POLICY_PROVENANCE = "simulate_lru() in this script"
+FIXED4_REQUIRED_TIMING_FIELDS = (
+    "sample_tokens",
+    "sample_layers",
+    "sample_expert_accesses",
+    "sample_expert_misses",
+    "sample_expert_hits",
+    "sample_hit_rate",
+)
 
 TENSORS_PER_EXPERT = 3
 NUM_BLOCKS = 32
@@ -65,10 +126,19 @@ BITPLANE_BYTES_PER_OBJECT_BIT = (
 
 METHOD_ORDER = ("Fixed4", "Fixed3", "DynAvg4", "DynAvg3")
 PAIR_BY_METHOD = {
-    "Fixed4": "c4l40:Fixed4-vs-DynAvg4",
-    "DynAvg4": "c4l40:Fixed4-vs-DynAvg4",
+    "Fixed4": "",
+    "DynAvg4": "",
     "Fixed3": "c3l30:Fixed3-vs-DynAvg3",
     "DynAvg3": "c3l30:Fixed3-vs-DynAvg3",
+}
+ROUTE_RELATIONSHIP_BY_METHOD = {
+    "Fixed4": (
+        "independent measured Fixed4 generation with no exported route hash; "
+        "not route-matched to DynAvg4"
+    ),
+    "DynAvg4": ("cold replay of the c4l40 route; not route-matched to measured Fixed4"),
+    "Fixed3": "route-matched to DynAvg3 on the selected c3l30 trace",
+    "DynAvg3": "route-matched to Fixed3 on the selected c3l30 trace",
 }
 METHOD_STYLE = {
     "Fixed4": {
@@ -156,6 +226,22 @@ class SimResult:
         return self.byte_hits / self.request_bytes
 
 
+@dataclass(frozen=True)
+class Fixed4RuntimeResult:
+    cache_gib: int
+    timing_csv: Path
+    timing_csv_size_bytes: int
+    timing_csv_sha256: str
+    trace_dir: Path
+    worker_trace_count: int
+    hits: int
+    misses: int
+    requests: int
+    request_hit_rate: float
+    sample_tokens: int
+    sample_layers: int
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -168,6 +254,20 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         help="server log from a marginal-gain c3l30 PagedMoE run",
     )
+    parser.add_argument(
+        "--fixed4-runtime-trace-root",
+        "--fixed4-runtime-root",
+        dest="fixed4_runtime_trace_root",
+        type=Path,
+        default=DEFAULT_FIXED4_RUNTIME_ROOT,
+        help=(f"Fixed4 runtime sweep containing traces/*/{FIXED4_TIMING_CSV_NAME}"),
+    )
+    parser.add_argument(
+        "--fixed4-figure-source-csv",
+        type=Path,
+        default=DEFAULT_FIXED4_FIGURE_SOURCE_CSV,
+        help="source CSV used by the earlier Fixed4 cache-capacity figure",
+    )
     parser.add_argument("--decode-tokens", type=int, default=DECODE_TOKENS)
     parser.add_argument("--layers", type=int, default=LAYERS)
     parser.add_argument("--top-k", type=int, default=TOP_K)
@@ -177,8 +277,8 @@ def parse_args() -> argparse.Namespace:
         "--cache-gib",
         type=int,
         nargs="+",
-        default=list(range(8, 65, 4)),
-        help="cache capacities to simulate (default: 8, 12, ..., 64)",
+        default=list(range(8, 49, 4)),
+        help="cache capacities to report (default: 8, 12, ..., 48)",
     )
     parser.add_argument("--output-dir", type=Path, default=SCRIPT_DIR)
     parser.add_argument("--output-stem", default=DEFAULT_OUTPUT_STEM)
@@ -460,6 +560,213 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def parse_nonnegative_int_field(
+    row: dict[str, str | None], field: str, source: str
+) -> int:
+    raw = row.get(field)
+    if raw is None or re.fullmatch(r"\d+", raw.strip()) is None:
+        raise ValueError(
+            f"{source}: {field} must be a non-negative integer, got {raw!r}"
+        )
+    return int(raw)
+
+
+def validate_fixed4_timing_row(
+    row: dict[str, str | None], source: str
+) -> tuple[int, int, int, int, int, float]:
+    sample_tokens = parse_nonnegative_int_field(row, "sample_tokens", source)
+    sample_layers = parse_nonnegative_int_field(row, "sample_layers", source)
+    requests = parse_nonnegative_int_field(row, "sample_expert_accesses", source)
+    misses = parse_nonnegative_int_field(row, "sample_expert_misses", source)
+    hits = parse_nonnegative_int_field(row, "sample_expert_hits", source)
+    raw_hit_rate = row.get("sample_hit_rate")
+    try:
+        hit_rate = float(raw_hit_rate) if raw_hit_rate is not None else math.nan
+    except ValueError as exc:
+        raise ValueError(
+            f"{source}: sample_hit_rate must be finite, got {raw_hit_rate!r}"
+        ) from exc
+    if not math.isfinite(hit_rate) or not 0.0 <= hit_rate <= 1.0:
+        raise ValueError(
+            f"{source}: sample_hit_rate must be in [0, 1], got {raw_hit_rate!r}"
+        )
+
+    expected = (
+        FIXED4_EXPECTED_SAMPLE_TOKENS,
+        FIXED4_EXPECTED_SAMPLE_LAYERS,
+        FIXED4_EXPECTED_SAMPLE_ACCESSES,
+    )
+    observed = (sample_tokens, sample_layers, requests)
+    if observed != expected:
+        raise ValueError(
+            f"{source}: expected tokens/layer-calls/accesses={expected}, got {observed}"
+        )
+    if sample_layers != sample_tokens * FIXED4_EXPECTED_MODEL_LAYERS:
+        raise ValueError(f"{source}: sample layer arithmetic is inconsistent")
+    if requests != sample_layers * FIXED4_EXPECTED_TOP_K:
+        raise ValueError(f"{source}: expert access arithmetic is inconsistent")
+    if hits + misses != requests:
+        raise ValueError(
+            f"{source}: hits + misses = {hits + misses}, but accesses = {requests}"
+        )
+
+    calculated_rate = hits / requests
+    if not math.isclose(hit_rate, calculated_rate, rel_tol=0.0, abs_tol=1e-12):
+        raise ValueError(
+            f"{source}: sample_hit_rate={hit_rate} but hits/accesses={calculated_rate}"
+        )
+    return sample_tokens, sample_layers, requests, misses, hits, calculated_rate
+
+
+def load_fixed4_runtime_results(
+    runtime_root: Path,
+    cache_gibs: Sequence[int],
+    decode_tokens: int,
+    layers: int,
+    top_k: int,
+) -> dict[int, Fixed4RuntimeResult]:
+    dimensions = (decode_tokens, layers, top_k)
+    expected_dimensions = (
+        FIXED4_EXPECTED_SAMPLE_TOKENS,
+        FIXED4_EXPECTED_MODEL_LAYERS,
+        FIXED4_EXPECTED_TOP_K,
+    )
+    if dimensions != expected_dimensions:
+        raise ValueError(
+            "the measured Fixed4 trace only supports "
+            f"decode_tokens/layers/top_k={expected_dimensions}, got {dimensions}"
+        )
+
+    root = runtime_root.resolve(strict=True)
+    timing_paths = sorted(root.glob(f"traces/*/{FIXED4_TIMING_CSV_NAME}"))
+    if not timing_paths:
+        raise ValueError(f"no Fixed4 timing traces found under {root}")
+
+    results: dict[int, Fixed4RuntimeResult] = {}
+    for timing_path in timing_paths:
+        match = FIXED4_CACHE_DIR_RE.search(timing_path.parent.name)
+        if match is None:
+            raise ValueError(
+                f"cannot parse cache capacity from trace directory {timing_path.parent}"
+            )
+        cache_gib = int(match.group("cache_gib"))
+        if cache_gib in results:
+            raise ValueError(f"duplicate Fixed4 timing trace for {cache_gib} GiB")
+
+        with timing_path.open(encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            fieldnames = reader.fieldnames
+            if fieldnames is None:
+                raise ValueError(f"{timing_path}: missing CSV header")
+            if len(fieldnames) != len(set(fieldnames)):
+                raise ValueError(f"{timing_path}: duplicate CSV header fields")
+            missing_fields = sorted(
+                set(FIXED4_REQUIRED_TIMING_FIELDS) - set(fieldnames)
+            )
+            if missing_fields:
+                raise ValueError(
+                    f"{timing_path}: missing required fields {missing_fields}"
+                )
+            rows = list(reader)
+        if len(rows) != 1:
+            raise ValueError(
+                f"expected one data row in {timing_path}, found {len(rows)}"
+            )
+        sample_tokens, sample_layers, requests, misses, hits, calculated_rate = (
+            validate_fixed4_timing_row(rows[0], str(timing_path))
+        )
+        worker_traces = sorted(timing_path.parent.glob("thread-*.bin"))
+        if not worker_traces:
+            raise ValueError(f"{timing_path.parent}: binary worker traces are missing")
+
+        results[cache_gib] = Fixed4RuntimeResult(
+            cache_gib=cache_gib,
+            timing_csv=timing_path.resolve(),
+            timing_csv_size_bytes=timing_path.stat().st_size,
+            timing_csv_sha256=sha256_file(timing_path),
+            trace_dir=timing_path.parent.resolve(),
+            worker_trace_count=len(worker_traces),
+            hits=hits,
+            misses=misses,
+            requests=requests,
+            request_hit_rate=calculated_rate,
+            sample_tokens=sample_tokens,
+            sample_layers=sample_layers,
+        )
+
+    missing = sorted(set(cache_gibs) - set(results))
+    if missing:
+        raise ValueError(
+            f"Fixed4 runtime traces do not contain requested cache capacities: {missing}"
+        )
+    return {cache_gib: results[cache_gib] for cache_gib in sorted(cache_gibs)}
+
+
+def validate_fixed4_figure_source(
+    path: Path, runtime_results: dict[int, Fixed4RuntimeResult]
+) -> dict[str, object]:
+    source_path = path.resolve(strict=True)
+    with source_path.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fieldnames = set(reader.fieldnames or ())
+        required_fields = {"cache_size_gib", "window_hit_rate", "window_tokens"}
+        missing_fields = sorted(required_fields - fieldnames)
+        if missing_fields:
+            raise ValueError(
+                f"{source_path}: missing Fixed4 figure fields {missing_fields}"
+            )
+
+        source_rows: dict[int, tuple[float, int]] = {}
+        for row in reader:
+            source = f"{source_path}:{reader.line_num}"
+            cache_gib = parse_nonnegative_int_field(row, "cache_size_gib", source)
+            window_tokens = parse_nonnegative_int_field(row, "window_tokens", source)
+            raw_hit_rate = row.get("window_hit_rate")
+            try:
+                hit_rate = float(raw_hit_rate) if raw_hit_rate is not None else math.nan
+            except ValueError as exc:
+                raise ValueError(
+                    f"{source}: window_hit_rate must be finite, got {raw_hit_rate!r}"
+                ) from exc
+            if not math.isfinite(hit_rate) or not 0.0 <= hit_rate <= 1.0:
+                raise ValueError(
+                    f"{source}: window_hit_rate must be in [0, 1], got {raw_hit_rate!r}"
+                )
+            if cache_gib in source_rows:
+                raise ValueError(f"{source}: duplicate {cache_gib} GiB row")
+            source_rows[cache_gib] = (hit_rate, window_tokens)
+
+    missing_capacities = sorted(set(runtime_results) - set(source_rows))
+    if missing_capacities:
+        raise ValueError(
+            f"{source_path}: missing Fixed4 capacities {missing_capacities}"
+        )
+    for cache_gib, runtime in runtime_results.items():
+        source_rate, source_tokens = source_rows[cache_gib]
+        if source_tokens != runtime.sample_tokens:
+            raise ValueError(
+                f"{source_path}: {cache_gib} GiB has {source_tokens} tokens; "
+                f"runtime trace has {runtime.sample_tokens}"
+            )
+        if not math.isclose(
+            source_rate, runtime.request_hit_rate, rel_tol=0.0, abs_tol=5e-9
+        ):
+            raise ValueError(
+                f"{source_path}: {cache_gib} GiB hit rate {source_rate} does not "
+                f"match runtime trace {runtime.request_hit_rate}"
+            )
+
+    return {
+        "path": str(source_path),
+        "sha256": sha256_file(source_path),
+        "validated_cache_gib": sorted(runtime_results),
+        "relationship": (
+            "Fixed4 values come from the same measured runtime sweep and match "
+            "the earlier figure's window_hit_rate values"
+        ),
+    }
+
+
 def route_sha256(trace: DecodeTrace) -> str:
     digest = hashlib.sha256()
     for token in range(trace.decode_tokens):
@@ -687,30 +994,136 @@ def result_rows(
     methods: dict[str, tuple[str, list[Access]]],
     traces: dict[str, DecodeTrace],
     trace_meta: dict[str, dict[str, object]],
+    fixed4_runtime: dict[int, Fixed4RuntimeResult],
     cache_gibs: Sequence[int],
     script_sha256: str,
 ) -> tuple[list[dict[str, object]], dict[str, dict[str, object]]]:
     rows: list[dict[str, object]] = []
     method_metadata: dict[str, dict[str, object]] = {}
     for method in METHOD_ORDER:
+        if method == "Fixed4":
+            fixed_size = object_size_bytes(4)
+            first = fixed4_runtime[sorted(cache_gibs)[0]]
+            method_metadata[method] = {
+                "result_kind": MEASURED_FIXED4_RESULT_KIND,
+                "source_type": "actual Fixed4 whole-expert runtime counters",
+                "result_provenance": (
+                    "independent per-capacity live PagedMoE runtime measurements"
+                ),
+                "policy_provenance": FIXED4_POLICY_PROVENANCE,
+                "route_relationship": ROUTE_RELATIONSHIP_BY_METHOD[method],
+                "trace_case": "fixed4-runtime",
+                "requests_per_capacity": first.requests,
+                "mean_precision_bits": 4.0,
+                "precision_histogram": {"4": first.requests},
+                "unique_exact_objects": None,
+                "unique_layer_experts": None,
+                "measurement_window": FIXED4_MEASUREMENT_WINDOW,
+                "cache_initial_state": FIXED4_INITIAL_CACHE_STATE,
+                "cache_policy": FIXED4_CACHE_POLICY,
+                "capacities": sorted(cache_gibs),
+            }
+            for cache_gib in sorted(cache_gibs):
+                runtime = fixed4_runtime[cache_gib]
+                request_bytes = runtime.requests * fixed_size
+                byte_hits = runtime.hits * fixed_size
+                rows.append(
+                    {
+                        "method": method,
+                        "comparison_design": "actual Fixed4 runtime trace counters",
+                        "matched_pair": "",
+                        "route_relationship": ROUTE_RELATIONSHIP_BY_METHOD[method],
+                        "result_provenance": (
+                            "measured counters from this row's trace_path"
+                        ),
+                        "trace_case": "fixed4-runtime",
+                        "trace_path": str(runtime.timing_csv),
+                        "trace_sha256": runtime.timing_csv_sha256,
+                        "route_sha256": "",
+                        "script_sha256": script_sha256,
+                        "result_kind": MEASURED_FIXED4_RESULT_KIND,
+                        "measurement_window": FIXED4_MEASUREMENT_WINDOW,
+                        "decode_selection": FIXED4_MEASUREMENT_WINDOW,
+                        "cache_initial_state": FIXED4_INITIAL_CACHE_STATE,
+                        "decode_tokens": runtime.sample_tokens,
+                        "layers": runtime.sample_layers // runtime.sample_tokens,
+                        "top_k": runtime.requests // runtime.sample_layers,
+                        "source_records": "",
+                        "prefill_records": "",
+                        "selected_records": runtime.sample_layers,
+                        "mean_precision_bits": "4.00000000",
+                        "precision_histogram": json.dumps(
+                            {"4": runtime.requests}, separators=(",", ":")
+                        ),
+                        "unique_exact_objects": "",
+                        "unique_layer_experts": "",
+                        "target_bits_min": 40,
+                        "target_bits_max": 40,
+                        "compute_bit_budgets": "[]",
+                        "max_load_bits": "[]",
+                        "cache_policy": FIXED4_CACHE_POLICY,
+                        "cache_policy_provenance": FIXED4_POLICY_PROVENANCE,
+                        "object_key": "(layer,expert_id,4)",
+                        "codebook_bytes_per_object": CODEBOOK_BYTES_PER_OBJECT,
+                        "bitplane_bytes_per_object_bit": BITPLANE_BYTES_PER_OBJECT_BIT,
+                        "cache_gib": cache_gib,
+                        "capacity_bytes": cache_gib * GIB,
+                        "hits": runtime.hits,
+                        "misses": runtime.misses,
+                        "requests": runtime.requests,
+                        "request_hit_rate": f"{runtime.request_hit_rate:.8f}",
+                        "byte_hits": byte_hits,
+                        "byte_misses": request_bytes - byte_hits,
+                        "request_bytes": request_bytes,
+                        "byte_hit_rate": f"{runtime.request_hit_rate:.8f}",
+                        "objects_final": "",
+                        "used_bytes_final": "",
+                        "used_gib_final": "",
+                    }
+                )
+            continue
+
         case, accesses = methods[method]
         stats = access_stats(accesses)
-        method_metadata[method] = {"trace_case": case, **stats}
+        method_metadata[method] = {
+            "result_kind": REPLAY_RESULT_KIND,
+            "source_type": "offline exact-object replay",
+            "result_provenance": "deterministic offline replay by this script",
+            "policy_provenance": REPLAY_POLICY_PROVENANCE,
+            "route_relationship": ROUTE_RELATIONSHIP_BY_METHOD[method],
+            "trace_case": case,
+            "measurement_window": REPLAY_MEASUREMENT_WINDOW,
+            "cache_initial_state": REPLAY_INITIAL_CACHE_STATE,
+            "cache_policy": REPLAY_CACHE_POLICY,
+            **stats,
+        }
         meta = trace_meta[case]
         trace = traces[case]
         for cache_gib in sorted(cache_gibs):
             result = simulate_lru(accesses, cache_gib * GIB)
+            comparison_design = (
+                "pairwise matched within c3l30 route"
+                if method in {"Fixed3", "DynAvg3"}
+                else "standalone replay on c4l40 route"
+            )
             rows.append(
                 {
                     "method": method,
-                    "comparison_design": "pairwise matched within each live-run route",
+                    "comparison_design": comparison_design,
                     "matched_pair": PAIR_BY_METHOD[method],
+                    "route_relationship": ROUTE_RELATIONSHIP_BY_METHOD[method],
+                    "result_provenance": (
+                        "deterministic offline replay of this row's trace_path"
+                    ),
                     "trace_case": case,
                     "trace_path": meta["path"],
                     "trace_sha256": meta["sha256"],
                     "route_sha256": meta["route_sha256"],
                     "script_sha256": script_sha256,
-                    "decode_selection": "last prefill access per layer + final N-1 decode cycles",
+                    "result_kind": REPLAY_RESULT_KIND,
+                    "measurement_window": REPLAY_MEASUREMENT_WINDOW,
+                    "decode_selection": REPLAY_MEASUREMENT_WINDOW,
+                    "cache_initial_state": REPLAY_INITIAL_CACHE_STATE,
                     "decode_tokens": trace.decode_tokens,
                     "layers": trace.layers,
                     "top_k": trace.top_k,
@@ -733,7 +1146,8 @@ def result_rows(
                     "max_load_bits": json.dumps(
                         meta["selected_max_load_bits"], separators=(",", ":")
                     ),
-                    "cache_policy": "global atomic byte-capacity LRU",
+                    "cache_policy": REPLAY_CACHE_POLICY,
+                    "cache_policy_provenance": REPLAY_POLICY_PROVENANCE,
                     "object_key": "(layer,expert_id,precision)",
                     "codebook_bytes_per_object": CODEBOOK_BYTES_PER_OBJECT,
                     "bitplane_bytes_per_object_bit": BITPLANE_BYTES_PER_OBJECT_BIT,
@@ -807,7 +1221,34 @@ def run_self_check() -> None:
     assert both_objects.hits == 2
     assert one_object.hits == 1
     assert object_size_bytes(4) == 3 * 32 * 1024 + 4 * 3 * 32 * 16 * 1024
-    print("self-check passed: parser, decode selection, and exact-object LRU")
+
+    fixed4_row = {
+        "sample_tokens": "500",
+        "sample_layers": "30000",
+        "sample_expert_accesses": "300000",
+        "sample_expert_misses": "128773",
+        "sample_expert_hits": "171227",
+        "sample_hit_rate": "0.5707566666666667",
+    }
+    validated = validate_fixed4_timing_row(fixed4_row, "self-check")
+    assert validated[2:5] == (300000, 128773, 171227)
+
+    def assert_invalid_fixed4_row(**updates: str) -> None:
+        invalid = {**fixed4_row, **updates}
+        try:
+            validate_fixed4_timing_row(invalid, "self-check-invalid")
+        except ValueError:
+            return
+        raise AssertionError(f"invalid Fixed4 row was accepted: {updates}")
+
+    assert_invalid_fixed4_row(sample_expert_misses="-1")
+    assert_invalid_fixed4_row(sample_expert_hits="171228")
+    assert_invalid_fixed4_row(sample_hit_rate="nan")
+    assert_invalid_fixed4_row(sample_tokens="499")
+    print(
+        "self-check passed: parser, decode selection, exact-object LRU, "
+        "and Fixed4 timing validation"
+    )
 
 
 def main() -> int:
@@ -836,6 +1277,16 @@ def main() -> int:
     c3_trace = select_decode_trace(
         c3_records, args.decode_tokens, args.layers, args.top_k
     )
+    fixed4_runtime = load_fixed4_runtime_results(
+        args.fixed4_runtime_trace_root,
+        args.cache_gib,
+        args.decode_tokens,
+        args.layers,
+        args.top_k,
+    )
+    fixed4_figure_source = validate_fixed4_figure_source(
+        args.fixed4_figure_source_csv, fixed4_runtime
+    )
 
     traces = {"c4l40": c4_trace, "c3l30": c3_trace}
     trace_meta = {
@@ -847,14 +1298,18 @@ def main() -> int:
         ),
     }
     methods = {
-        "Fixed4": ("c4l40", build_accesses(c4_trace, fixed_precision=4)),
         "Fixed3": ("c3l30", build_accesses(c3_trace, fixed_precision=3)),
         "DynAvg4": ("c4l40", build_accesses(c4_trace, fixed_precision=None)),
         "DynAvg3": ("c3l30", build_accesses(c3_trace, fixed_precision=None)),
     }
     script_sha256 = sha256_file(Path(__file__).resolve())
     rows, method_meta = result_rows(
-        methods, traces, trace_meta, args.cache_gib, script_sha256
+        methods,
+        traces,
+        trace_meta,
+        fixed4_runtime,
+        args.cache_gib,
+        script_sha256,
     )
     route_comparison = compare_routes(c4_trace, c3_trace)
 
@@ -872,6 +1327,7 @@ def main() -> int:
     plot_results(output_stem, rows, args.cache_gib)
     primary_results = {
         str(row["method"]): {
+            "result_kind": str(row["result_kind"]),
             "request_hit_rate": float(row["request_hit_rate"]),
             "byte_hit_rate": float(row["byte_hit_rate"]),
             "hits": int(row["hits"]),
@@ -883,31 +1339,91 @@ def main() -> int:
         "script": str(Path(__file__).resolve()),
         "script_sha256": script_sha256,
         "comparison_design": {
-            "type": "pairwise matched within each live-run route",
+            "type": "hybrid actual-runtime reference and offline replay",
             "pairs": {
-                "c4l40": ["Fixed4", "DynAvg4"],
                 "c3l30": ["Fixed3", "DynAvg3"],
             },
+            "standalone": {
+                "Fixed4": "actual Fixed4 whole-expert runtime sweep",
+                "DynAvg4": "offline exact-object replay of the c4l40 live run",
+            },
+            "route_relationships": ROUTE_RELATIONSHIP_BY_METHOD,
             "warning": (
-                "The c4l40 and c3l30 generations may have different routes; "
-                "do not interpret all four methods as replaying one shared trace."
+                "Fixed4 uses a prefill-warm runtime cache and its own generated "
+                "routes. The other methods are cold offline replays. Only Fixed3 "
+                "and DynAvg3 are route-matched; do not interpret all four methods "
+                "as a controlled same-route comparison."
             ),
         },
-        "cache_policy": "global atomic byte-capacity LRU",
+        "result_kinds": {
+            "Fixed4": MEASURED_FIXED4_RESULT_KIND,
+            "Fixed3": REPLAY_RESULT_KIND,
+            "DynAvg4": REPLAY_RESULT_KIND,
+            "DynAvg3": REPLAY_RESULT_KIND,
+        },
+        "cache_policy": {
+            "Fixed4": {
+                "description": FIXED4_CACHE_POLICY,
+                "provenance": FIXED4_POLICY_PROVENANCE,
+            },
+            "offline_replays": {
+                "description": REPLAY_CACHE_POLICY,
+                "provenance": REPLAY_POLICY_PROVENANCE,
+            },
+        },
         "exact_object_key": ["layer", "expert_id", "precision"],
         "object_size_bytes": {
             "formula": "3*32*1024 + precision*3*32*16384",
             "codebook": CODEBOOK_BYTES_PER_OBJECT,
             "per_bitplane": BITPLANE_BYTES_PER_OBJECT_BIT,
         },
-        "decode_selection": (
-            "first output token uses the last prefill record for each layer; "
-            "the remaining tokens use the final complete 0..layers-1 cycles"
-        ),
+        "measurement_window": {
+            "Fixed4": FIXED4_MEASUREMENT_WINDOW,
+            "offline_replays": REPLAY_MEASUREMENT_WINDOW,
+        },
+        "decode_selection": {
+            "Fixed4": FIXED4_MEASUREMENT_WINDOW,
+            "offline_replays": REPLAY_MEASUREMENT_WINDOW,
+        },
+        "cache_initial_state": {
+            "Fixed4": FIXED4_INITIAL_CACHE_STATE,
+            "offline_replays": REPLAY_INITIAL_CACHE_STATE,
+        },
         "cache_gib": sorted(args.cache_gib),
         "primary_cache_gib": args.primary_cache_gib,
         "primary_results": primary_results,
-        "traces": trace_meta,
+        "traces": {
+            **trace_meta,
+            "fixed4_runtime": {
+                "result_kind": MEASURED_FIXED4_RESULT_KIND,
+                "run_root": str(args.fixed4_runtime_trace_root.resolve()),
+                "source": FIXED4_POLICY_PROVENANCE,
+                "cache_initial_state": FIXED4_INITIAL_CACHE_STATE,
+                "measurement_window": FIXED4_MEASUREMENT_WINDOW,
+                "cache_policy": FIXED4_CACHE_POLICY,
+                "cache_policy_provenance": FIXED4_POLICY_PROVENANCE,
+                "route_relationship": ROUTE_RELATIONSHIP_BY_METHOD["Fixed4"],
+                "analyzer": (
+                    "script/analyze_fixed4_whole_expert_timing.py at root "
+                    "commit 644487a"
+                ),
+                "earlier_figure_source": fixed4_figure_source,
+                "cases": {
+                    str(cache_gib): {
+                        "timing_csv": str(runtime.timing_csv),
+                        "timing_csv_size_bytes": runtime.timing_csv_size_bytes,
+                        "timing_csv_sha256": runtime.timing_csv_sha256,
+                        "binary_trace_dir": str(runtime.trace_dir),
+                        "binary_worker_trace_count": runtime.worker_trace_count,
+                        "requests": runtime.requests,
+                        "hits": runtime.hits,
+                        "misses": runtime.misses,
+                        "request_hit_rate": runtime.request_hit_rate,
+                    }
+                    for cache_gib, runtime in fixed4_runtime.items()
+                },
+            },
+        },
         "methods": method_meta,
         "route_comparison": route_comparison,
         "outputs": {
@@ -937,8 +1453,9 @@ def main() -> int:
         print(f"first route divergence: token={first['token']} layer={first['layer']}")
     for method in METHOD_ORDER:
         stats = method_meta[method]
+        requests = stats.get("requests", stats.get("requests_per_capacity"))
         print(
-            f"{method}: requests={stats['requests']} "
+            f"{method}: requests={requests} "
             f"mean_precision={float(stats['mean_precision_bits']):.4f} "
             f"unique_exact_objects={stats['unique_exact_objects']}"
         )
