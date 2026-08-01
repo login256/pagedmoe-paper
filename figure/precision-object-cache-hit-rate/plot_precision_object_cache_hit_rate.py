@@ -406,7 +406,7 @@ def write_plot_series_csv(
         writer = csv.writer(csv_file, lineterminator="\n")
         writer.writerow(["series", "cache_gib", "hit_rate"])
         for result in results:
-            writer.writerow([spec.naive_label, result.cache_gib, f"{result.request_hit_rate:.8f}"])
+            writer.writerow([spec.naive_label, result.cache_gib, f"{result.byte_hit_rate:.8f}"])
         for case, label in (
             (spec.dynamic_case, spec.dynamic_label),
             (spec.static_case, spec.static_label),
@@ -453,7 +453,7 @@ def plot(
     fig, ax = plt.subplots(figsize=(3.35, 2.35))
 
     trace_values = [
-        (result.cache_gib, result.request_hit_rate * 100.0) for result in results
+        (result.cache_gib, result.byte_hit_rate * 100.0) for result in results
     ]
     all_series = {
         "naive": (spec.naive_label, trace_values),
